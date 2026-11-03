@@ -1,0 +1,41 @@
+# Maven and Java build output
+/target/
+/out/
+/build/
+/dist/
+*.class
+
+# Local IDE settings, run configurations, and database connections
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.local.properties
+
+# Generated reports and development scratch space
+/exports/
+/*.csv
+/work/
+*.tmp
+*.log
+
+# JVM diagnostics
+hs_err_pid*
+replay_pid*
+*.hprof
+*.jfr
+
+# macOS and Windows metadata
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
