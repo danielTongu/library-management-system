@@ -26,6 +26,9 @@ It does not connect to MySQL or open native windows.
 | SampleDataChecks | Canonical fixture, repeat population, preserved edits/history, conflicts, retry after partial failure | FR-13 |
 | CsvExportChecks | UTF-8, commas/quotes/newlines, nulls, empty reports, invalid destinations, existing-file preservation | FR-12 |
 
+The suite checks application behavior; generated record equality/accessors and
+duplicate table sorting/refresh assertions are omitted.
+
 ## Live MySQL check
 
 The separate JdbcPersistenceChecks requires:
@@ -63,10 +66,9 @@ It is excluded from AllChecks and has not been run against a live server in this
 
 ## Documentation and structure checks
 
-`tools/generate-javadoc.py` runs Javadoc with full doclint and warnings treated as
-errors. Local documentation links, package-to-folder alignment, ignored outputs,
+Generate Javadocs in IntelliJ with full doclint and warnings treated as errors. Local documentation links, package-to-folder alignment, ignored outputs,
 old production-class names, and duplicate source files are checked during audit.
-See [development](development.md) for the API and visual-preview commands.
+See [development](development.md) for the Javadoc settings and manual layout-review procedure.
 
 ## Evidence recorded in this audit
 

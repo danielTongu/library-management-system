@@ -4,11 +4,11 @@
 
 ```mermaid
 flowchart TB
-    Main --> DesktopApplication
+    Main --> LibraryApp
     Main --> SampleData
     Main --> DatabaseSettings
     Main --> JDBC[JdbcLibraryRepository]
-    DesktopApplication --> UI[LibraryWindow and workspace components]
+    LibraryApp --> UI[LibraryWindow and workspace components]
     UI --> Library
     UI --> Rows[LibraryRecords / LibrarySection / RecordFilter]
     UI --> CSV[CsvExport]
@@ -36,11 +36,13 @@ MySQL mode uses JDBC and explicitly initializes missing tables before the GUI st
 | `model` | Identity, local validation, and domain state |
 | `service` | Workflow validation, date/fine policy, and reporting snapshots |
 | `persistence` | Record storage contract, memory/JDBC implementations, configuration |
-| `ui` | Swing controls, presentation data, styling, filters, and export |
+| `ui` | Desktop startup, window, workspace, components, styling, display data, and CSV export |
+| `images/` | Versioned UI reference screenshots at the project root |
 
-All UI source lives directly in `ui`. SQL and database setup documentation live
+UI source lives directly in ui; tests use the same package. SQL and database setup documentation live
 in `database/`. There is one production class for each responsibility; generated
-classes, previews, and API documentation are excluded from Git.
+classes and API documentation are excluded from Git. UI reference screenshots
+are versioned in `images/`.
 
 ## Write ownership
 
@@ -69,13 +71,13 @@ Read methods still load the full dataset; targeted queries and pagination are fu
 
 ## Desktop composition
 
-- DesktopApplication installs the theme and schedules Swing construction.
+- LibraryApp installs the theme and schedules Swing construction.
 - LibraryWindow wires forms, record actions, worker lifecycle, and close handling.
 - LibraryWorkspace owns sidebar navigation, page cards, storage badge, and status footer.
 - SectionPanel supplies the title, explanation, and action area.
 - OverviewDashboard highlights values already present in overview rows.
 - RecordTable owns read-only tables, sorting, search, status filters, and export selection.
-- RecordCellRenderer and DesktopTheme centralize visual presentation.
+- RecordCellRenderer and LibraryTheme centralize visual presentation.
 
 A SwingWorker runs record operations and refresh mapping outside the event thread.
 Its completion handler updates components on the event thread. Export captures a

@@ -10,6 +10,8 @@ first if persistent storage is needed.
 The header identifies Saved library or Temporary library. Temporary records are
 lost when the window closes; the application asks before discarding them.
 
+![Overview workspace](../images/overview.png)
+
 ## First borrowing workflow
 
 1. **Books:** choose Add book. Enter ISBN, title, and author.

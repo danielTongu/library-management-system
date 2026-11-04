@@ -13,7 +13,7 @@ ignore/index state. Reference date: November 3, 2026.
 | Monetary columns used text sorting | Added numeric/date comparisons and a regression check for 0.50, 2.00, 10.00 |
 | Closing could interrupt a pending report export | Close now waits for record and export work to finish |
 | Public APIs lacked consistent validation/result contracts | Added focused Javadocs, package documentation, and full doclint verification |
-| Scratch folder retained an old JDBC download, crashed test-server logs, and old preview classes | Removed obsolete scratch artifacts; promoted the useful preview into a documented test utility |
+| Scratch folder retained an old JDBC download, crashed test-server logs, and old preview classes | Removed obsolete scratch artifacts; retained reference images and replaced the preview utility with manual screenshot instructions |
 | IDE database/run configuration files were already in Git's index | Added complete IDE ignore rules; user untracked the local IDE files and the index is now clear of them |
 | Documentation described retired console workflows and repeated old behavior | Consolidated current GUI-only documentation, requirements, flow, architecture, and verification |
 | Generated classes and docs could retain moved/deleted artifacts | Rebuilt output from current source; generated files stay ignored |
@@ -21,7 +21,8 @@ ignore/index state. Reference date: November 3, 2026.
 No duplicate Java source files or duplicate fully qualified production class names
 were found. Similar service/repository method names are intentional boundaries:
 Library validates workflows, repositories store records. There is one canonical
-sample source and one authoritative schema.
+sample source and one authoritative schema. UI classes use a flat ui package, with
+matching test packages and screenshots retained in the project-root images folder.
 
 ## Verification record
 

@@ -20,6 +20,11 @@ A graphical display is required. Temporary records are lost on close; the header
 storage mode. Configure MySQL with the [database setup guide](database/README.md)
 on macOS or Windows. Credentials belong in environment variables, not source files.
 
+## UI images
+
+Reference screenshots are saved in [images](images/README.md).
+See [layout review](docs/development.md#review-desktop-layout) for updating screenshots after UI changes.
+
 ## Documentation
 
 Start with the [software documentation index](docs/README.md).
@@ -33,7 +38,7 @@ Start with the [software documentation index](docs/README.md).
 - [Audit findings and remaining actions](docs/audit.md)
 
 SampleData is the only example dataset. Database creation and the schema live in
-`database/`; all GUI code lives directly in `ui`.
+`database/`; GUI classes live directly under `ui`, with reference screenshots in the project-root `images/` folder.
 
 ## Verify
 
@@ -44,9 +49,9 @@ mvn test
 ```
 
 Use JDK 27 for Maven as well as the project. AllChecks runs twelve local check
-groups without MySQL or native windows. Generate API documentation with
-`python3 tools/generate-javadoc.py` on macOS or `py -3 tools/generate-javadoc.py`
-on Windows; open `target/site/apidocs/index.html` afterward.
+groups without MySQL or native windows. Generate API documentation using
+IntelliJ’s **Tools > Generate JavaDoc** on macOS or Windows; see the
+[development guide](docs/development.md#generate-javadocs) for settings.
 
 The local suite and Javadocs are verified. Live MySQL and native macOS/Windows
 acceptance remain pending; see the testing guide. This is a source/Maven project,

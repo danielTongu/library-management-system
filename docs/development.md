@@ -5,8 +5,6 @@
 Use JDK 27 and Maven, or IntelliJ's bundled Maven. Set the project SDK, module SDK,
 Main JRE, and Maven runner JRE consistently. The project has no Makefile requirement.
 Maven dependencies/plugins must be available locally or downloaded during setup.
-No Python dependency is needed to run the application; Python 3 is optional for
-the documentation helper below.
 
 - Compile: `mvn compile` or IntelliJ Build Project.
 - Verify: `mvn test` or IntelliJ Maven Lifecycle > test.
@@ -30,24 +28,16 @@ changes. Avoid copying long setup instructions into multiple guides.
 
 ## Generate Javadocs
 
-With JAVA_HOME pointing to JDK 27, run from the project folder:
+In IntelliJ, choose **Tools > Generate JavaDoc** (or search for Generate JavaDoc
+with Find Action). Select the production source scope and use the project's JDK 27.
+Set the output directory to `target/site/apidocs` and add these options:
 
-macOS:
-
-```bash
-python3 tools/generate-javadoc.py
+```text
+-Xdoclint:all -Werror -encoding UTF-8 -docencoding UTF-8 -charset UTF-8
 ```
 
-Windows:
-
-```powershell
-py -3 tools/generate-javadoc.py
-```
-
-Open `target/site/apidocs/index.html`. The helper uses only Python's standard
-library and the JDK Javadoc executable. It enables full doclint and treats warnings
-as errors. Generated HTML stays under the ignored Maven output directory.
-You can also use IntelliJ's Generate JavaDoc action for interactive browsing.
+Open `target/site/apidocs/index.html` afterward. These steps apply on macOS and
+Windows. Generated HTML stays under the ignored Maven output directory.
 
 Javadocs document parameters, results, validation, identity, and storage/threading
 boundaries. Comments explain decisions such as commit-before-mutation and
@@ -55,11 +45,10 @@ save-success/refresh-failure; avoid narrating obvious assignments or loops.
 
 ## Review desktop layout
 
-Run `WorkspacePreview.main()` under src/test/java in IntelliJ. It renders actual
-workspace components to ignored `work/previews/` PNG files without a native JFrame.
-The preview has inert action buttons and does not connect to MySQL. It covers
-Overview, Books, Loans, and a compact layout. Review those images, then manually
-check native focus, forms, confirmations, and save dialogs.
+Run Main with `--sample` in IntelliJ and review all five sections at standard
+and minimum window sizes. Check focus, forms, confirmations, and save dialogs.
+Capture updated screenshots into `images/` when the layout changes. Existing
+images are references from an earlier rendered session, not automatically updated.
 
 ## Change workflow
 
@@ -73,13 +62,13 @@ check native focus, forms, confirmations, and save dialogs.
 5. Add meaningful regression checks under matching test packages and register new
    local groups in AllChecks. Keep live database checks separate.
 6. Run Maven test, generate Javadocs, check documentation links and the diff, and
-   review previews when layout changes.
+   review the running UI when layout changes.
 7. Keep statements on one line when comfortably within the 120-column guide;
    wrap for length or clarity rather than decorative formatting.
 
 ## Git and local files
 
-The .gitignore excludes build output, work/previews, root-level CSV reports,
+The .gitignore excludes build output, scratch work, root-level CSV reports,
 exports, credentials/local configuration, IDE metadata, logs, JVM diagnostics,
 and operating-system metadata. Commit source, tests, documentation, DDL, and pom.xml.
 Use `exports/` for local reports when choosing a save destination.
@@ -95,3 +84,19 @@ git rm -r --cached -- .idea
 Review `git status` before committing. The local IDE files have been
 untracked and their absence from the index verified. No automatic commits or
 broad restaging were performed.
+
+## UI layout
+
+All UI Java classes live directly in `com.daniel.library.ui`, and checks use the
+same package under src/test/java. Components keep focused class responsibilities
+without additional UI subpackages. Helpers stay package-private when only the UI
+uses them.
+
+```text
+project/
+├── images/                             # Versioned screenshots
+└── src/main/java/com/daniel/library/
+    └── ui/                             # All UI Java classes
+```
+
+Save reference screenshots in `images/`.
