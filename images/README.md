@@ -1,15 +1,19 @@
 # UI reference images
 
-Screenshots rendered from the actual Swing components using the canonical sample data.
+Reference images show Swing components populated with the sample dataset.
 
-- `overview.png`: summary cards and library totals.
-- `books.png`: catalog, search, and archive controls.
-- `copies.png`: physical copies and availability.
-- `members.png`: borrower records and contact editing.
-- `loans.png`: borrowing, returns, and late charges.
+| Image | Content |
+| --- | --- |
+| [overview.png](overview.png) | Summary cards and library totals |
+| [books.png](books.png) | Active titles, copy counts, borrowers, and selection actions |
+| [copies.png](copies.png) | Physical copies, availability, and checkout |
+| [members.png](members.png) | Contact records, current loan counts, and loan navigation |
+| [loans.png](loans.png) | Current borrowing, related book/member details, and returns |
+| [compact.png](compact.png) | Overview at the minimum window size |
+| [checkout.png](checkout.png) | Copy and borrower choices in the checkout form |
 
-To update these references on macOS or Windows, run Main with `--sample` in
-IntelliJ and capture screenshots of each section and the compact layout.
-They are versioned UI reference screenshots; the application renders live Swing
-components. Sample status and charge values depend on the rendering date.
-Native dialogs and operating-system window decorations are not included.
+For layout review on macOS or Windows, run Main with `--sample` in IntelliJ.
+Capture each section, the minimum window size, and the checkout form. Sample
+statuses and charges depend on the reporting date. Selection actions are disabled
+until an eligible row is selected. Native dialog buttons and operating-system
+window decorations are outside these reference images.
