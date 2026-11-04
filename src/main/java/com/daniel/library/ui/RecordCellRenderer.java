@@ -30,7 +30,8 @@ final class RecordCellRenderer extends DefaultTableCellRenderer {
         setBorder(BorderFactory.createEmptyBorder(0, 14, 0, 14));
 
         String header = table.getColumnName(column);
-        boolean identifier = header.equals("ISBN") || header.equals("Copy ID") || header.equals("Member ID");
+        boolean identifier = header.equals("ISBN") || header.equals("Copy ID")
+                || header.equals("Member ID") || header.equals("Loan ID");
         setFont(identifier ? new Font(Font.MONOSPACED, Font.PLAIN, 12) : LibraryTheme.font(13, Font.PLAIN));
         setHorizontalAlignment(value instanceof Number || header.equals("Value") ? SwingConstants.RIGHT : SwingConstants.LEFT);
         badge = header.equals("Status");

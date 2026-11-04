@@ -10,37 +10,38 @@ public enum LibrarySection {
      * Catalog titles and archive status.
      */
     BOOKS("Books",
-            "Books is your catalog of titles and authors. Add a book first, then add its physical copies. " +
-                    "Archive a title to stop lending its copies without deleting history; restore it to lend again.",
-            List.of("ISBN", "Title", "Author", "Status"),
-            3, List.of("All", "Active", "Archived")
+            "Books lists titles and authors. Active titles are shown first; choose Archived to restore a title. "
+                    + "Select an active book to add a copy. Archive is available only after all copies are returned.",
+            List.of("ISBN", "Title", "Author", "Status", "Copies", "Current borrowers"),
+            List.of("All", "Active", "Archived")
     ),
     /**
      * Physical items and availability.
      */
     COPIES("Copies",
             "A copy is one physical book that someone can borrow. " +
-                    "Each copy has its own Copy ID; several copies can share a book's ISBN. Check availability here.",
-            List.of("Copy ID", "ISBN", "Title", "Status"),
-            3, List.of("All", "Available", "Checked out", "Archived")
+                    "Each copy has its own Copy ID; several copies can share a book's ISBN. See who has each checked-out copy and when it is due. Select an available row to check it out. Record returns in Loans.",
+            List.of("Copy ID", "ISBN", "Title", "Author", "Status", "Member ID", "Borrower", "Due"),
+            List.of("All", "Available", "Checked out", "Archived")
     ),
     /**
      * Registered borrower contact records.
      */
     MEMBERS("Members",
             "Members are the people registered to borrow books. Register each person with a unique "
-                    + "Member ID. Use that ID when checking out a copy.",
-            List.of("Member ID", "Name", "Email"),
-            -1, List.of()
+                    + "Member ID. Current loans counts the copies they still have. Select a member and choose View current loans to review or return them.",
+            List.of("Member ID", "Name", "Email", "Current loans"),
+            List.of()
     ),
     /**
      * Borrowing, returns, and late charges.
      */
     LOANS("Loans",
-            "A loan records which member borrowed a copy and when it is due back. " +
-                    "Check out copy starts borrowing; Return copy records its return. Overdue means it is late. Fines show late charges.",
-            List.of("Copy ID", "Member ID", "Member", "Due", "Returned", "Status", "Fine"),
-            5, List.of("All", "Active", "Overdue", "Returned")
+            "Loans records who borrowed each copy and when it is due. Current shows active and overdue borrowing; "
+                    + "choose Returned or All for history. Start borrowing in Copies. Select a current loan to return it.",
+            List.of("Loan ID", "Copy ID", "ISBN", "Title", "Author", "Member ID", "Member",
+                    "Checked out", "Due", "Returned", "Status", "Fine"),
+            List.of("All", "Current", "Active", "Overdue", "Returned")
     ),
     /**
      * Read-only library totals.
@@ -49,7 +50,7 @@ public enum LibrarySection {
             "See the library at a glance. Current loans include overdue borrowing. " +
                     "Available copies exclude archived titles. Late charges are calculated fees; payments are not tracked.",
             List.of("Measure", "Value"),
-            -1, List.of()
+            List.of()
     );
 
     private final String title;
@@ -58,11 +59,11 @@ public enum LibrarySection {
     private final int statusColumn;
     private final List<String> statuses;
 
-    LibrarySection(String title, String guidance, List<String> columns, int statusColumn, List<String> statuses) {
+    LibrarySection(String title, String guidance, List<String> columns, List<String> statuses) {
         this.title = title;
         this.guidance = guidance;
         this.columns = columns;
-        this.statusColumn = statusColumn;
+        this.statusColumn = columns.indexOf("Status");
         this.statuses = statuses;
     }
 
@@ -85,6 +86,20 @@ public enum LibrarySection {
      */
     public List<String> columns() {
         return columns;
+    }
+
+    /**
+     * Finds a field by its stable header rather than a display position.
+     * @param column column header defined for this section
+     * @return the model column index
+     * @throws IllegalArgumentException if the section does not define that column
+     */
+    public int columnIndex(String column) {
+        int index = columns.indexOf(column);
+        if (index < 0) {
+            throw new IllegalArgumentException("Unknown " + title + " column: " + column);
+        }
+        return index;
     }
 
     /**

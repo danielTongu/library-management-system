@@ -2,7 +2,6 @@ package com.daniel.library.ui;
 
 
 import javax.swing.BorderFactory;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -11,6 +10,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
@@ -19,8 +19,6 @@ import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.plaf.basic.BasicButtonUI;
-import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -36,6 +34,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Predicate;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
@@ -51,11 +52,15 @@ class RecordTable extends JPanel {
     private final TableRowSorter<DefaultTableModel> sorter;
     private final JTextField search = new JTextField(19);
     private final JLabel count = new JLabel();
+    private final JLabel memberScope = new JLabel();
+    private String loanMemberId;
     private final JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 12));
     private JComboBox<String> status;
     private int statusColumn;
     private String defaultFilename = "library-records.csv";
     private boolean exporting;
+    private boolean actionsBusy;
+    private final Map<JButton, Predicate<String[]>> selectionActions = new LinkedHashMap<>();
 
     /**
      * Builds a table with the section columns and optional status choices.
@@ -67,6 +72,11 @@ class RecordTable extends JPanel {
         defaultFilename = section.title().toLowerCase(Locale.ROOT) + ".csv";
         if (!section.statuses().isEmpty()) {
             addStatusFilter(section.statusColumn(), section.statuses().toArray(String[]::new));
+            if (section == LibrarySection.BOOKS) {
+                status.setSelectedItem("Active");
+            } else if (section == LibrarySection.LOANS) {
+                status.setSelectedItem("Current");
+            }
         }
     }
 
@@ -100,7 +110,11 @@ class RecordTable extends JPanel {
                 }
             }
         };
+        if (columns.length > 4) {
+            table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        }
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.getSelectionModel().addListSelectionListener(event -> updateSelectionActions());
         sorter = new TableRowSorter<>(model);
 
         for (int column = 0; column < columns.length; column++) {
@@ -141,7 +155,18 @@ class RecordTable extends JPanel {
         for (int index = 0; index < columns.length; index++) {
             var column = table.getColumnModel().getColumn(index);
             column.setMinWidth(columns[index].equals("Status") ? 110 : 80);
-            column.setPreferredWidth(columns[index].equals("Title") || columns[index].equals("Email") ? 240 : 150);
+            boolean details = columns[index].equals("Current borrowers");
+            column.setMinWidth(details ? 280 : column.getMinWidth());
+            column.setPreferredWidth(switch (columns[index]) {
+                case "Copy ID", "Member ID", "Fine" -> 100;
+                case "Status", "Copies", "Current loans" -> 110;
+                case "Checked out", "Due", "Returned" -> 115;
+                case "Name" -> 140;
+                case "Title" -> 190;
+                case "Email" -> 200;
+                case "Current borrowers" -> 360;
+                default -> 150;
+            });
         }
 
         setBackground(LibraryTheme.SURFACE);
@@ -169,13 +194,23 @@ class RecordTable extends JPanel {
         JButton clear = LibraryTheme.button("Clear filters", false);
         clear.setName("clearFilters");
         clear.addActionListener(event -> {
+            loanMemberId = null;
+            memberScope.setVisible(false);
             search.setText("");
             if (status != null) {
                 status.setSelectedIndex(0);
             }
         });
         filters.add(clear);
-        add(filters, BorderLayout.NORTH);
+        memberScope.setName("memberScope");
+        memberScope.setForeground(LibraryTheme.ACCENT);
+        memberScope.setBorder(BorderFactory.createEmptyBorder(0, 14, 10, 14));
+        memberScope.setVisible(false);
+        JPanel searchPanel = new JPanel(new BorderLayout());
+        searchPanel.setOpaque(false);
+        searchPanel.add(filters, BorderLayout.NORTH);
+        searchPanel.add(memberScope, BorderLayout.SOUTH);
+        add(searchPanel, BorderLayout.NORTH);
 
         JButton export = LibraryTheme.button("Export CSV", false);
         export.addActionListener(event -> exportRecords(export));
@@ -186,7 +221,16 @@ class RecordTable extends JPanel {
         count.setForeground(LibraryTheme.MUTED);
         count.setFont(LibraryTheme.font(12, Font.PLAIN));
         footer.add(count, BorderLayout.WEST);
-        footer.add(export, BorderLayout.EAST);
+        JButton details = LibraryTheme.button("View details", false);
+        details.setEnabled(false);
+        details.setToolTipText("Select a row to read all its details, including current borrowing");
+        table.getSelectionModel().addListSelectionListener(event -> details.setEnabled(table.getSelectedRow() >= 0));
+        details.addActionListener(event -> showSelectedDetails());
+        JPanel reportActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        reportActions.setOpaque(false);
+        reportActions.add(details);
+        reportActions.add(export);
+        footer.add(reportActions, BorderLayout.EAST);
         add(footer, BorderLayout.SOUTH);
 
         search.getDocument().addDocumentListener(new DocumentListener() {
@@ -218,6 +262,40 @@ class RecordTable extends JPanel {
         model.setRowCount(0);
         rows.forEach(model::addRow);
         applyFilters();
+    }
+
+    /** Keeps a selection action consistent with sorting, filtering, refreshes, and background writes. */
+    void bindSelectionAction(JButton button, Predicate<String[]> eligible) {
+        selectionActions.put(button, eligible);
+        updateSelectionActions();
+    }
+
+    void setActionsBusy(boolean busy) {
+        actionsBusy = busy;
+        updateSelectionActions();
+    }
+
+    private void updateSelectionActions() {
+        String[] selected = selectedRecord();
+        selectionActions.forEach((button, eligible) ->
+                button.setEnabled(!actionsBusy && selected != null && eligible.test(selected)));
+    }
+
+    void restoreColumnWidths(UiPreferences preferences, LibrarySection section) {
+        for (int index = 0; index < table.getColumnCount(); index++) {
+            var column = table.getColumnModel().getColumn(index);
+            String header = model.getColumnName(column.getModelIndex());
+            int width = preferences.columnWidth(section, header, column.getPreferredWidth(), column.getMinWidth());
+            column.setPreferredWidth(width);
+            column.setWidth(width);
+        }
+    }
+
+    void rememberColumnWidths(UiPreferences preferences, LibrarySection section) {
+        for (int index = 0; index < table.getColumnCount(); index++) {
+            var column = table.getColumnModel().getColumn(index);
+            preferences.rememberColumnWidth(section, model.getColumnName(column.getModelIndex()), column.getWidth());
+        }
     }
 
     List<Object[]> displayedRows() {
@@ -270,6 +348,25 @@ class RecordTable extends JPanel {
         }.execute();
     }
 
+    private void showSelectedDetails() {
+        String[] values = selectedRecord();
+        if (values == null) {
+            return;
+        }
+        StringBuilder text = new StringBuilder();
+        for (int column = 0; column < values.length; column++) {
+            text.append(model.getColumnName(column)).append(":\n")
+                    .append(values[column].isEmpty() ? "—" : values[column]).append("\n\n");
+        }
+        JTextArea description = new JTextArea(text.toString(), 18, 48);
+        description.setEditable(false);
+        description.setLineWrap(true);
+        description.setWrapStyleWord(true);
+        description.setFont(LibraryTheme.font(14, Font.PLAIN));
+        description.setCaretPosition(0);
+        JOptionPane.showMessageDialog(this, new JScrollPane(description), "Record details", JOptionPane.PLAIN_MESSAGE);
+    }
+
     /**
      * Allows the workspace to defer closing while a report is being written.
      *
@@ -298,33 +395,29 @@ class RecordTable extends JPanel {
         return values;
     }
 
+    /**
+     * Opens this loan table on one exact member identity, including overdue borrowing.
+     * Clears previous search and selection; Clear filters removes the member scope.
+     *
+     * @param memberId exact borrower identity
+     * @param memberName display name for the visible scope label
+     */
+    void showCurrentLoans(String memberId, String memberName) {
+        loanMemberId = memberId;
+        memberScope.setText("Loans for " + memberName + " (" + memberId + ") — Clear filters to show everyone");
+        memberScope.setVisible(true);
+        table.clearSelection();
+        search.setText("");
+        status.setSelectedItem("Current");
+        applyFilters();
+        revalidate();
+    }
+
     void addStatusFilter(int column, String... choices) {
         statusColumn = column;
         status = new JComboBox<>(choices);
 
-        status.setUI(new BasicComboBoxUI() {
-            @Override
-            protected JButton createArrowButton() {
-                JButton arrow = new JButton("▾");
-                arrow.setUI(new BasicButtonUI());
-                arrow.setContentAreaFilled(false);
-                arrow.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
-                arrow.setForeground(LibraryTheme.MUTED);
-                return arrow;
-            }
-        });
-
-        status.setBackground(LibraryTheme.SURFACE);
-        status.setForeground(LibraryTheme.INK);
-        status.setBorder(BorderFactory.createLineBorder(LibraryTheme.BORDER, 1, true));
-
-        status.setRenderer((list, value, index, selected, focus) -> {
-            JLabel label = (JLabel) new DefaultListCellRenderer().getListCellRendererComponent(list, value, index, selected, focus);
-            label.setBackground(selected ? LibraryTheme.SELECTED : LibraryTheme.SURFACE);
-            label.setForeground(LibraryTheme.INK);
-            label.setBorder(BorderFactory.createEmptyBorder(7, 10, 7, 10));
-            return label;
-        });
+        LibraryTheme.comboBox(status);
 
         status.setName("recordStatus");
         status.setPreferredSize(new Dimension(130, 36));
@@ -343,6 +436,7 @@ class RecordTable extends JPanel {
         String query = search.getText().strip().toLowerCase(Locale.ROOT);
         String selected = status == null || status.getSelectedIndex() == 0 ? null : (String) status.getSelectedItem();
 
+        int memberColumn = model.findColumn("Member ID");
         sorter.setRowFilter(new RowFilter<>() {
             @Override
             public boolean include(Entry<? extends DefaultTableModel, ? extends Integer> entry) {
@@ -350,10 +444,12 @@ class RecordTable extends JPanel {
                 for (int column = 0; column < entry.getValueCount(); column++) {
                     values[column] = entry.getValue(column);
                 }
-                return RecordFilter.matches(values, query, status == null ? -1 : statusColumn, selected);
+                return (loanMemberId == null || loanMemberId.equals(values[memberColumn]))
+                        && RecordFilter.matches(values, query, status == null ? -1 : statusColumn, selected);
             }
         });
 
+        updateSelectionActions();
         count.setText(sorter.getViewRowCount() + " of " + model.getRowCount() + " records");
     }
 

@@ -9,7 +9,10 @@ import com.daniel.library.service.LibrarySnapshot;
 import com.daniel.library.service.LibrarySummary;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Presentation rows for a single screen refresh, prepared outside the Swing event thread.
@@ -33,35 +36,52 @@ public record LibraryRecords(List<Object[]> books, List<Object[]> copies, List<O
      */
     public static LibraryRecords load(Library library, String message) {
         LibrarySnapshot snapshot = library.getSnapshot();
+        Map<String, Loan> loansByCopy = new HashMap<>();
+        Map<String, List<Loan>> loansByMember = new HashMap<>();
+        Map<String, List<Loan>> loansByBook = new HashMap<>();
+        for (Loan loan : snapshot.records().loans()) {
+            if (loan.isActive()) {
+                loansByCopy.put(loan.getCopy().copyId(), loan);
+                loansByMember.computeIfAbsent(loan.getMember().getMemberId(), key -> new ArrayList<>()).add(loan);
+                loansByBook.computeIfAbsent(loan.getCopy().book().getIsbn(), key -> new ArrayList<>()).add(loan);
+            }
+        }
         List<Object[]> bookRows = new ArrayList<>();
         for (Book book : snapshot.records().books()) {
             String state = book.isArchived() ? "Archived" : "Active";
-            bookRows.add(new Object[]{book.getIsbn(), book.getTitle(), book.getAuthor(), state});
+            String borrowers = loansByBook.getOrDefault(book.getIsbn(), List.of()).stream()
+                    .map(loan -> loan.getMember().getName() + " (" + loan.getMember().getMemberId() + "), "
+                            + loan.getCopy().copyId() + ", due " + loan.getDueDate())
+                    .collect(Collectors.joining("; "));
+            long copies = snapshot.records().copies().stream()
+                    .filter(copy -> copy.book().getIsbn().equals(book.getIsbn())).count();
+            bookRows.add(new Object[]{book.getIsbn(), book.getTitle(), book.getAuthor(), state,
+                    copies, borrowers.isEmpty() ? "None" : borrowers});
         }
 
         List<Object[]> copyRows = new ArrayList<>();
         for (BookCopy copy : snapshot.records().copies()) {
-            String availability = copy.book().isArchived() ? "Archived"
-                    : snapshot.isAvailable(copy) ? "Available" : "Checked out";
-            copyRows.add(new Object[]{copy.copyId(), copy.book().getIsbn(), copy.book().getTitle(), availability});
+            Loan loan = loansByCopy.get(copy.copyId());
+            String availability = copy.book().isArchived() ? "Archived" : loan == null ? "Available" : "Checked out";
+            copyRows.add(new Object[]{copy.copyId(), copy.book().getIsbn(), copy.book().getTitle(), copy.book().getAuthor(), availability,
+                    loan == null ? "" : loan.getMember().getMemberId(),
+                    loan == null ? "" : loan.getMember().getName(), loan == null ? null : loan.getDueDate()});
         }
 
         List<Object[]> memberRows = new ArrayList<>();
         for (Member member : snapshot.records().members()) {
-            memberRows.add(new Object[]{member.getMemberId(), member.getName(), member.getEmail()});
+            List<Loan> current = loansByMember.getOrDefault(member.getMemberId(), List.of());
+            memberRows.add(new Object[]{member.getMemberId(), member.getName(), member.getEmail(), current.size()});
         }
 
         List<Object[]> loanRows = new ArrayList<>();
         for (Loan loan : snapshot.records().loans()) {
             String state = !loan.isActive() ? "Returned" : snapshot.isOverdue(loan) ? "Overdue" : "Active";
             loanRows.add(new Object[]{
-                    loan.getCopy().copyId(),
-                    loan.getMember().getMemberId(),
-                    loan.getMember().getName(),
-                    loan.getDueDate(),
-                    loan.getReturnDate(),
-                    state,
-                    snapshot.calculateFine(loan)
+                    loan.getLoanId(), loan.getCopy().copyId(), loan.getCopy().book().getIsbn(),
+                    loan.getCopy().book().getTitle(), loan.getCopy().book().getAuthor(),
+                    loan.getMember().getMemberId(), loan.getMember().getName(), loan.getCheckoutDate(),
+                    loan.getDueDate(), loan.getReturnDate(), state, snapshot.calculateFine(loan)
             });
         }
 

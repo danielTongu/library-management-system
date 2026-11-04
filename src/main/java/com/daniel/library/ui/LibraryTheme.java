@@ -2,12 +2,16 @@ package com.daniel.library.ui;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.JLabel;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
@@ -128,6 +132,39 @@ final class LibraryTheme {
         field.setCaretColor(ACCENT);
         field.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER, 1, true),
                 BorderFactory.createEmptyBorder(7, 10, 7, 10)));
+    }
+
+    /**
+     * Applies shared dropdown styling and complete-value tooltips.
+     * @param choices dropdown to style on the Swing event thread
+     * @param <T> choice value type
+     */
+    static <T> void comboBox(JComboBox<T> choices) {
+        choices.setUI(new BasicComboBoxUI() {
+            @Override
+            protected JButton createArrowButton() {
+                JButton arrow = new JButton("▾");
+                arrow.setUI(new BasicButtonUI());
+                arrow.setContentAreaFilled(false);
+                arrow.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+                arrow.setForeground(MUTED);
+                return arrow;
+            }
+        });
+        choices.setFont(font(13, Font.PLAIN));
+        choices.setBackground(SURFACE);
+        choices.setForeground(INK);
+        choices.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
+        DefaultListCellRenderer renderer = new DefaultListCellRenderer();
+        choices.setRenderer((list, value, index, selected, focus) -> {
+            JLabel label = (JLabel) renderer.getListCellRendererComponent(list, value, index, selected, focus);
+            label.setText(value == null ? "Choose…" : value.toString());
+            label.setBackground(selected ? SELECTED : SURFACE);
+            label.setForeground(INK);
+            label.setBorder(BorderFactory.createEmptyBorder(7, 10, 7, 10));
+            label.setToolTipText(value == null ? null : value.toString());
+            return label;
+        });
     }
 
     /**

@@ -30,10 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import java.util.function.Predicate;
 
 /**
  * Desktop presentation; record operations run off the Swing event thread.
- * Window state is not a persistence format; only repository records are saved.
+ * Local layout preferences are stored separately from library records.
  * @serial exclude
  */
 public class LibraryWindow extends JFrame {
@@ -46,8 +47,13 @@ public class LibraryWindow extends JFrame {
     private final RecordTable copies = new RecordTable(LibrarySection.COPIES);
     private final RecordTable members = new RecordTable(LibrarySection.MEMBERS);
     private final RecordTable loans = new RecordTable(LibrarySection.LOANS);
+    private final Map<LibrarySection, RecordTable> tables = Map.of(LibrarySection.OVERVIEW, overview,
+            LibrarySection.BOOKS, books, LibrarySection.COPIES, copies, LibrarySection.MEMBERS, members,
+            LibrarySection.LOANS, loans);
+    private final UiPreferences preferences = new UiPreferences();
     private final OverviewDashboard dashboard = new OverviewDashboard(overview);
     private final LibraryWorkspace workspace;
+    private LibraryRecords currentRecords;
     private boolean busy;
 
     /**
@@ -78,10 +84,11 @@ public class LibraryWindow extends JFrame {
 
         workspace = new LibraryWorkspace(persistent, pages, status, button("Refresh all", () -> perform(() -> "Records refreshed.")));
         setContentPane(workspace);
-        setMinimumSize(new Dimension(1040, 660));
-
         Rectangle available = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        setSize(Math.min(1220, available.width - 24), Math.min(800, available.height - 24));
+        setMinimumSize(new Dimension(Math.min(1040, Math.max(1, available.width - 24)),
+                Math.min(660, Math.max(1, available.height - 24))));
+        setSize(preferences.windowSize(available));
+        tables.forEach((section, table) -> table.restoreColumnWidths(preferences, section));
         setLocation(available.x + (available.width - getWidth()) / 2, available.y + (available.height - getHeight()) / 2);
 
         perform(() -> "Ready.");
@@ -98,28 +105,50 @@ public class LibraryWindow extends JFrame {
                 });
             }
         }));
-        actions.add(button("Edit selected book", this::editBook));
-        actions.add(button("Archive selected book", () -> changeBookArchive(true)));
-        actions.add(button("Restore selected book", () -> changeBookArchive(false)));
+        actions.add(selectionButton("Add copy", books, this::addCopyForSelectedBook,
+                row -> row[LibrarySection.BOOKS.statusColumn()].equals("Active")));
+        actions.add(selectionButton("Edit selected book", books, this::editBook, row -> true));
+        actions.add(selectionButton("Archive selected book", books, () -> changeBookArchive(true),
+                row -> row[LibrarySection.BOOKS.statusColumn()].equals("Active")
+                        && row[LibrarySection.BOOKS.columnIndex("Current borrowers")].equals("None")));
+        actions.add(selectionButton("Restore selected book", books, () -> changeBookArchive(false),
+                row -> row[LibrarySection.BOOKS.statusColumn()].equals("Archived")));
 
         return new SectionPanel(LibrarySection.BOOKS, books, actions);
     }
 
+    private void addCopyForSelectedBook() {
+        String[] selected = selectedRecord(books);
+        if (selected == null) {
+            return;
+        }
+        String isbn = selected[LibrarySection.BOOKS.columnIndex("ISBN")];
+        String title = selected[LibrarySection.BOOKS.columnIndex("Title")];
+        String[] values = form("Add copy: " + title + " (" + isbn + ")", "Copy ID");
+        if (values != null) {
+            perform(() -> {
+                library.addCopy(values[0], isbn);
+                return "Copy added for " + title + ".";
+            });
+        }
+    }
+
     private void changeBookArchive(boolean archive) {
+        LibrarySection section = LibrarySection.BOOKS;
         String[] selected = selectedRecord(books);
         if (selected == null) {
             return;
         }
 
         String action = archive ? "Archive" : "Restore";
-        int choice = JOptionPane.showConfirmDialog(this, action + " " + selected[1] + "?", action + " book", JOptionPane.YES_NO_OPTION);
+        int choice = JOptionPane.showConfirmDialog(this, action + " " + selected[section.columnIndex("Title")] + "?", action + " book", JOptionPane.YES_NO_OPTION);
 
         if (choice == JOptionPane.YES_OPTION) {
             perform(() -> {
                 if (archive) {
-                    library.archiveBook(selected[0]);
+                    library.archiveBook(selected[section.columnIndex("ISBN")]);
                 } else {
-                    library.restoreBook(selected[0]);
+                    library.restoreBook(selected[section.columnIndex("ISBN")]);
                 }
                 return archive ? "Book archived. Copies cannot be borrowed until restored." : "Book restored.";
             });
@@ -137,7 +166,80 @@ public class LibraryWindow extends JFrame {
                 });
             }
         }));
+        actions.add(selectionButton("Check out selected copy", copies, this::checkoutSelectedCopy,
+                row -> row[LibrarySection.COPIES.statusColumn()].equals("Available")));
         return new SectionPanel(LibrarySection.COPIES, copies, actions);
+    }
+
+    private void checkoutSelectedCopy() {
+        LibrarySection section = LibrarySection.COPIES;
+        String[] selected = selectedRecord(copies);
+        if (selected == null) {
+            return;
+        }
+        if (!selected[section.columnIndex("Status")].equals("Available")) {
+            JOptionPane.showMessageDialog(this, "Select an available copy. Borrowed or archived copies cannot be checked out.");
+            return;
+        }
+        checkoutCopy(selected[section.columnIndex("Copy ID")]);
+    }
+
+    private void checkoutCopy(String selectedCopyId) {
+        if (currentRecords == null) {
+            JOptionPane.showMessageDialog(this, "Refresh records before checking out a copy.");
+            return;
+        }
+        CheckoutForm form = new CheckoutForm(currentRecords, selectedCopyId);
+        if (!form.hasAvailableCopies()) {
+            JOptionPane.showMessageDialog(this, "No copies are available. Add a copy, return a borrowed copy, or restore an archived title.");
+            return;
+        }
+        if (!form.hasMembers()) {
+            JOptionPane.showMessageDialog(this, "Register a member in Members before checking out a copy.");
+            return;
+        }
+        while (JOptionPane.showConfirmDialog(this, form, "Check out copy", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            String copyId = form.selectedCopyId();
+            String memberId = form.selectedMemberId();
+            if (copyId != null && memberId != null) {
+                perform(() -> "Checked out " + copyId + ". Due: " + library.checkoutBook(copyId, memberId).getDueDate());
+                return;
+            }
+            JOptionPane.showMessageDialog(this, "Choose an available copy and a borrower.");
+        }
+    }
+
+    private void returnSelectedLoan() {
+        LibrarySection section = LibrarySection.LOANS;
+        String[] selected = selectedRecord(loans);
+        if (selected == null) {
+            return;
+        }
+        if (selected[section.columnIndex("Status")].equals("Returned")) {
+            JOptionPane.showMessageDialog(this, "This loan is already returned. Select an active or overdue loan.");
+            return;
+        }
+        String copyId = selected[section.columnIndex("Copy ID")];
+        String title = selected[section.columnIndex("Title")];
+        String borrower = selected[section.columnIndex("Member")] + " ("
+                + selected[section.columnIndex("Member ID")] + ")";
+        confirmReturn(copyId, title, borrower);
+    }
+
+    private void confirmReturn(String copyId, String title, String borrower) {
+        String message = "Return " + copyId + ": " + title + "\nBorrower: " + borrower + "?";
+        int choice = JOptionPane.showConfirmDialog(this, message, "Return copy", JOptionPane.YES_NO_OPTION);
+        if (choice == JOptionPane.YES_OPTION) {
+            returnCopy(copyId);
+        }
+    }
+
+    private void returnCopy(String copyId) {
+        perform(() -> {
+            Loan returned = library.returnBook(copyId);
+            return "Copy " + copyId + " returned. Fine: " + library.calculateFine(returned);
+        });
     }
 
     private JPanel memberPanel() {
@@ -151,35 +253,47 @@ public class LibraryWindow extends JFrame {
                 });
             }
         }));
-        actions.add(button("Edit selected member", this::editMember));
+        actions.add(selectionButton("Edit selected member", members, this::editMember, row -> true));
+        actions.add(selectionButton("View current loans", members, this::viewMemberLoans, row -> true));
         return new SectionPanel(LibrarySection.MEMBERS, members, actions);
     }
 
+    private void viewMemberLoans() {
+        LibrarySection section = LibrarySection.MEMBERS;
+        String[] selected = selectedRecord(members);
+        if (selected != null) {
+            loans.showCurrentLoans(selected[section.columnIndex("Member ID")], selected[section.columnIndex("Name")]);
+            workspace.showSection(LibrarySection.LOANS);
+        }
+    }
+
     private void editBook() {
+        LibrarySection section = LibrarySection.BOOKS;
         String[] selected = selectedRecord(books);
         if (selected == null) {
             return;
         }
-        String[] values = populatedForm("Edit book: " + selected[0],
-                new String[]{"Title", "Author"}, new String[]{selected[1], selected[2]});
+        String[] values = populatedForm("Edit book: " + selected[section.columnIndex("ISBN")],
+                new String[]{"Title", "Author"}, new String[]{selected[section.columnIndex("Title")], selected[section.columnIndex("Author")]});
         if (values != null) {
             perform(() -> {
-                library.updateBook(selected[0], values[0], values[1]);
+                library.updateBook(selected[section.columnIndex("ISBN")], values[0], values[1]);
                 return "Book updated.";
             });
         }
     }
 
     private void editMember() {
+        LibrarySection section = LibrarySection.MEMBERS;
         String[] selected = selectedRecord(members);
         if (selected == null) {
             return;
         }
-        String[] values = populatedForm("Edit member: " + selected[0],
-                new String[]{"Name", "Email"}, new String[]{selected[1], selected[2]});
+        String[] values = populatedForm("Edit member: " + selected[section.columnIndex("Member ID")],
+                new String[]{"Name", "Email"}, new String[]{selected[section.columnIndex("Name")], selected[section.columnIndex("Email")]});
         if (values != null) {
             perform(() -> {
-                library.updateMember(selected[0], values[0], values[1]);
+                library.updateMember(selected[section.columnIndex("Member ID")], values[0], values[1]);
                 return "Member updated.";
             });
         }
@@ -195,28 +309,25 @@ public class LibraryWindow extends JFrame {
 
     private JPanel loanPanel() {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        actions.add(button("Check out copy", () -> {
-            String[] values = form("Check out copy", "Copy ID", "Member ID");
-            if (values != null) {
-                perform(() -> "Checked out. Due: " + library.checkoutBook(values[0], values[1]).getDueDate());
-            }
-        }));
-        actions.add(button("Return copy", () -> {
-            String[] values = form("Return copy", "Copy ID");
-            if (values != null) {
-                perform(() -> {
-                    Loan returned = library.returnBook(values[0]);
-                    return "Copy returned. Fine: " + library.calculateFine(returned);
-                });
-            }
-        }));
+        actions.add(selectionButton("Return selected loan", loans, this::returnSelectedLoan,
+                row -> row[LibrarySection.LOANS.statusColumn()].equals("Active")
+                        || row[LibrarySection.LOANS.statusColumn()].equals("Overdue")));
         return new SectionPanel(LibrarySection.LOANS, loans, actions);
     }
 
     private JButton button(String label, Runnable action) {
-        JButton button = LibraryTheme.button(label, label.startsWith("Add ") || label.startsWith("Register ") || label.startsWith("Check out"));
+        boolean primary = label.startsWith("Add ") || label.startsWith("Register ")
+                || label.startsWith("Check out") || label.equals("Return selected loan");
+        JButton button = LibraryTheme.button(label, primary);
         button.addActionListener(event -> action.run());
         buttons.add(button);
+        return button;
+    }
+
+    private JButton selectionButton(String label, RecordTable table, Runnable action, Predicate<String[]> eligible) {
+        JButton button = button(label, action);
+        button.setToolTipText("Select an eligible record to " + label.toLowerCase(java.util.Locale.ROOT));
+        table.bindSelectionAction(button, eligible);
         return button;
     }
 
@@ -281,6 +392,7 @@ public class LibraryWindow extends JFrame {
             protected void done() {
                 try {
                     LibraryRecords records = get();
+                    currentRecords = records;
                     overview.setRows(records.overview());
                     dashboard.setRows(records.overview());
                     books.setRows(records.books());
@@ -305,6 +417,7 @@ public class LibraryWindow extends JFrame {
         busy = value;
         workspace.setBusy(value);
         buttons.forEach(button -> button.setEnabled(!value));
+        tables.values().forEach(table -> table.setActionsBusy(value));
     }
 
     private void showError(String message) {
@@ -325,6 +438,11 @@ public class LibraryWindow extends JFrame {
                 return;
             }
         }
+        if ((getExtendedState() & MAXIMIZED_BOTH) == 0) {
+            preferences.rememberWindowSize(getSize());
+        }
+        tables.forEach((section, table) -> table.rememberColumnWidths(preferences, section));
+        preferences.save();
         dispose();
     }
 
