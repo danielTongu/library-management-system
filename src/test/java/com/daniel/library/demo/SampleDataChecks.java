@@ -1,5 +1,7 @@
 package com.daniel.library.demo;
 
+import static com.daniel.library.ui.LibrarySection.LOANS;
+
 import com.daniel.library.model.Book;
 import com.daniel.library.model.Loan;
 import com.daniel.library.persistence.InMemoryLibraryRepository;
@@ -21,9 +23,10 @@ public class SampleDataChecks {
         LibraryRecords records = LibraryRecords.load(library, "Samples");
         check(records.books().size() == 3 && records.copies().size() == 4, "Sample catalog and copies");
         check(records.members().size() == 3 && records.loans().size() == 3, "Sample members and loans");
-        check(records.loans().stream().anyMatch(row -> row[5].equals("Active")), "Active example");
-        check(records.loans().stream().anyMatch(row -> row[5].equals("Overdue")), "Overdue example");
-        check(records.loans().stream().anyMatch(row -> row[5].equals("Returned")), "Returned example");
+        check(records.loans().stream().anyMatch(row -> row[LOANS.statusColumn()].equals("Active")), "Active example");
+        check(records.loans().stream().anyMatch(row -> row[LOANS.statusColumn()].equals("Overdue")), "Overdue example");
+        check(records.loans().stream().anyMatch(row -> row[LOANS.statusColumn()].equals("Returned")),
+                "Returned example");
         for (LibrarySection section : LibrarySection.values()) {
             check(!section.guidance().isBlank(), "Every desktop section has guidance");
             for (Object[] row : records.rows(section)) {
@@ -31,8 +34,9 @@ public class SampleDataChecks {
             }
         }
         var filtered = records.loans().stream()
-                .filter(row -> RecordFilter.matches(row, "Alex", 5, "Overdue")).toList();
-        check(filtered.size() == 1 && filtered.getFirst()[2].equals("Alex Morgan"), "Sample loan filtering");
+                .filter(row -> RecordFilter.matches(row, "Alex", LOANS.statusColumn(), "Overdue")).toList();
+        check(filtered.size() == 1 && filtered.getFirst()[LOANS.columnIndex("Member")].equals("Alex Morgan"),
+                "Sample loan filtering");
         InMemoryLibraryRepository target = new InMemoryLibraryRepository();
         SampleData.populate(target);
         check(target.load().books().size() == 3 && target.load().loans().size() == 3, "Population adds sample records");

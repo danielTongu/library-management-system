@@ -1,5 +1,9 @@
 package com.daniel.library.service;
 
+import static com.daniel.library.ui.LibrarySection.BOOKS;
+import static com.daniel.library.ui.LibrarySection.COPIES;
+
+import com.daniel.library.ui.LibrarySection;
 import com.daniel.library.model.Book;
 import com.daniel.library.model.Member;
 import com.daniel.library.ui.LibraryRecords;
@@ -27,8 +31,8 @@ public class ArchivingChecks {
         library.updateBook("123", "Edited Archived Book", "New Author");
         check(library.getBooks().getFirst().isArchived(), "Editing does not restore an archived book");
         LibraryRecords records = LibraryRecords.load(library, "");
-        check(records.books().getFirst()[3].equals("Archived"), "Shared book status");
-        check(records.copies().getFirst()[3].equals("Archived"), "Shared copy status");
+        check(records.books().getFirst()[BOOKS.columnIndex("Status")].equals("Archived"), "Shared book status");
+        check(records.copies().getFirst()[COPIES.columnIndex("Status")].equals("Archived"), "Shared copy status");
         library.restoreBook("123");
         library.restoreBook("123");
         check(library.isCopyAvailable("C001"), "Restored copy available");

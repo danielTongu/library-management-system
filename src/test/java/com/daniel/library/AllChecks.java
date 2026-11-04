@@ -12,6 +12,7 @@ import com.daniel.library.service.SummaryChecks;
 import com.daniel.library.ui.TableFilterChecks;
 import com.daniel.library.ui.CsvExportChecks;
 import com.daniel.library.ui.DesktopChecks;
+import com.daniel.library.ui.UiPreferencesChecks;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class AllChecks {
                 new Check("Persistence failures", PersistenceFailureChecks::main),
                 new Check("Desktop data and tables", DesktopChecks::main),
                 new Check("Desktop filters", TableFilterChecks::main),
+                new Check("Layout preferences", UiPreferencesChecks::main),
                 new Check("Shared samples", SampleDataChecks::main),
                 new Check("CSV exports", CsvExportChecks::main));
         AssertionError failures = new AssertionError("One or more local check groups failed.");
