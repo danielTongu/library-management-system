@@ -1,0 +1,30 @@
+# Project conventions
+
+- Keep `Main` limited to application startup.
+- Keep the canonical sample fixtures and repository-based population in `com.daniel.library.demo`.
+- Put domain objects and their own rules in `model`; coordinate workflows in `service`.
+- Keep Swing presentation in ui and JDBC in persistence. Domain and service code must remain independent of these technologies.
+- Keep classes focused, imports ordered, fields before constructors, and related methods together. Prefer named constants for business defaults and short methods over section-divider comments.
+- Preserve existing public behavior during organizational changes. Avoid unnecessary abstractions while this is a learning project.
+- Place checks under `src/test/java` in packages matching the behavior they exercise. Add new local check groups to AllChecks, which Maven runs during the test phase. Individual check classes remain directly runnable; live JdbcPersistenceChecks stays outside the default suite.
+- After changes, compile all sources, run `FineChecks`, and verify startup paths when launch behavior changes; native GUI launches need a graphical display. Use the project's JDK 27.
+- Update README.md when project structure, run instructions, or supported features change.
+- Keep statements, method signatures, calls, and conditions on one line when they fit comfortably (use 120 columns as a guide). Wrap only for length or clarity; keep normal block braces and indentation.
+- The app is GUI-only. Main opens the desktop by default; --sample provides memory examples and --database selects MySQL.
+- Run `AvailabilityChecks` after changing copy availability or member loan lookups. Derive availability from active loans rather than storing a separate status flag.
+- Required fields and record invariants belong in model constructors, including when records are created outside the GUI. Run `ValidationChecks` after changes to these rules.
+- JDBC code belongs in `persistence`; database scripts and setup instructions belong in `database/`. Keep credentials in environment variables. Never store real passwords in project files.
+- Library is the public business API; LibraryRepository is the shared storage API for InMemoryLibraryRepository and JdbcLibraryRepository. Keep record collections in repositories, not Library. Complete durable writes before mutating returned objects. Run PersistenceFailureChecks when changing save behavior. Live JdbcPersistenceChecks require the separate library_management_test database; never point checks at real records.
+- Keep default mode and standalone --sample in memory. --database explicitly selects MySQL; --database --sample adds missing examples using SampleData.populate(). Document unverified live-database behavior honestly.
+- Keep database/README.md as the canonical persistence setup guide and database/create-database.sql as the saved database creation script. Update them when setup requirements change.
+- Database setup instructions must support both macOS and Windows. Label platform-specific commands and use IntelliJ run configurations on both systems.
+- Keep all UI classes directly under ui, matching checks under the test ui package, and reference screenshots in the project-root images folder. Views use the Library API for every operation. Keep database operations off Swing's event thread and component updates on it. Preserve default GUI startup, --sample, and --database. Run DesktopChecks when desktop behavior changes, and distinguish headless checks from native-window or live-MySQL verification.
+- Keep ISBNs and member IDs stable during editing. Validate all replacement fields before saving or mutating existing details. Run EditingChecks and PersistenceFailureChecks for editing changes; check sorted/filtered table selection through TableFilterChecks.
+- Desktop sections use LibrarySection, LibraryRecords, and RecordFilter. Keep operations, status labels, guidance, and search behavior consistent. SampleData is the only example dataset. Use its repository API to populate memory or MySQL; do not duplicate examples in SQL files. SampleDataChecks covers repeatable population and preservation of existing records.
+- Archived titles retain copies and history, cannot accept new copies or checkouts, and cannot be archived while any copy is borrowed. Restore re-enables lending. Preserve archive status when editing. Run ArchivingChecks and keep desktop status filters consistent.
+- Desktop CSV exports use ui/CsvExport and preserve the displayed filtering, sorting, and columns. Keep exports separate from persistence, preserve existing files, and run CsvExportChecks plus TableFilterChecks when export behavior changes.
+- Overview totals come from Library.getSummary(), used by the desktop. Current loans include overdue loans; available copies exclude archived titles. Keep current and returned late charges separate and do not label them unpaid balances. Run SummaryChecks for these calculations.
+- Keep desktop visual styling in LibraryTheme, LibraryWorkspace, SectionPanel, OverviewDashboard, and RecordCellRenderer. Preserve keyboard navigation, textual status labels, and existing desktop workflows. Review rendered workspace panels at standard and minimum sizes after layout changes.
+- Document public APIs and package responsibilities with Javadocs. Keep requirements, architecture, flow, data model, and verification in docs/, with database/README.md canonical for setup. Check documentation links and package structure, and generate Javadocs in IntelliJ after documentation or structural changes.
+- Build presentation from Library.getSnapshot() so one refresh reads storage once and uses one reporting date. Snapshots have read-only lists but shared mutable entities; do not mutate while rendering. Run SnapshotChecks for this boundary.
+- Save versioned UI reference screenshots under images. Capture updated images from the running sample GUI; do not duplicate them under scratch folders.
