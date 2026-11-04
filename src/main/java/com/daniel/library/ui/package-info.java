@@ -1,2 +1,2 @@
-/** Swing presentation, workspace styling, tabular read models, filtering, and CSV reports. */
+/** Swing startup, workspace, components, styling, presentation, and CSV reporting. */
 package com.daniel.library.ui;
