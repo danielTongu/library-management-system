@@ -1,59 +1,57 @@
 # Library Management System
 
-A Java Swing desktop application for a small library: catalog titles, physical
-copies, members, borrowing/returns, late charges, editing, archiving, overview
-totals, search, and CSV reports. It supports temporary memory or MySQL storage.
+A Java Swing application for managing books, physical copies, members, loans,
+returns, late charges, and archived titles. Records can use temporary memory or MySQL.
 
 ## Run
 
-Open the project in IntelliJ, reload Maven, select JDK 27 for the project/module
+Open the project in IntelliJ, reload Maven, select JDK 27 for the project, module,
 and run configuration, then run `com.daniel.library.Main`.
 
 | Program arguments | Behavior |
 | --- | --- |
-| None | Empty temporary desktop library |
-| `--sample` | Temporary desktop with canonical example records |
-| `--database` | Desktop using saved MySQL records |
-| `--database --sample` | Add missing examples to MySQL, preserving existing records |
+| None | Empty temporary library |
+| `--sample` | Temporary library with sample records |
+| `--database` | Library using MySQL storage |
+| `--database --sample` | Add missing sample records to MySQL and open the library |
 
-A graphical display is required. Temporary records are lost on close; the header identifies
-storage mode. Configure MySQL with the [database setup guide](database/README.md)
-on macOS or Windows. Credentials belong in environment variables, not source files.
+A graphical display is required. Temporary records are lost when the window closes.
+For MySQL on macOS or Windows, follow the [database setup guide](database/README.md).
+Credentials are supplied through environment variables.
 
-## UI images
+## Use the library
 
-Reference screenshots are saved in [images](images/README.md).
-See [layout review](docs/development.md#review-desktop-layout) for updating screenshots after UI changes.
+- **Overview:** totals, availability, overdue borrowing, and late charges.
+- **Books:** title records, copy counts, current borrowers, and archive/restore actions.
+  The initial filter is Active. Add copy uses the selected title's ISBN.
+- **Copies:** physical items, book details, availability, and checkout.
+- **Members:** contact records, current loan counts, and View current loans.
+- **Loans:** borrowing details and returns. The initial filter is Current;
+  Returned and All include completed borrowing.
+
+Related details follow their foreign-key IDs in tables. Search, sorting, View details,
+and CSV exports use the displayed information. Selection actions require eligible
+records. Window size and column widths are saved locally.
 
 ## Documentation
 
-Start with the [software documentation index](docs/README.md).
-
-- [Requirements and scope](docs/requirements.md)
+- [Documentation index](docs/README.md)
+- [Requirements](docs/requirements.md)
 - [Application flow](docs/application-flow.md)
 - [Architecture](docs/architecture.md) and [data model](docs/data-model.md)
 - [User guide](docs/user-guide.md)
-- [Testing and acceptance](docs/testing.md)
+- [Testing](docs/testing.md)
 - [Development and Javadocs](docs/development.md)
-- [Audit findings and remaining actions](docs/audit.md)
-
-SampleData is the only example dataset. Database creation and the schema live in
-`database/`; GUI classes live directly under `ui`, with reference screenshots in the project-root `images/` folder.
+- [UI reference images](images/README.md)
 
 ## Verify
 
-In IntelliJ's Maven panel, choose **Lifecycle > test**. With Maven on PATH:
+Use JDK 27. In IntelliJ's Maven panel, choose **Lifecycle > test**, or run:
 
 ```text
 mvn test
 ```
 
-Use JDK 27 for Maven as well as the project. AllChecks runs twelve local check
-groups without MySQL or native windows. Generate API documentation using
-IntelliJ’s **Tools > Generate JavaDoc** on macOS or Windows; see the
-[development guide](docs/development.md#generate-javadocs) for settings.
-
-The local suite and Javadocs are verified. Live MySQL and native macOS/Windows
-acceptance remain pending; see the testing guide. This is a source/Maven project,
-not an installer or self-contained executable distribution.
-# library-management-system
+AllChecks runs thirteen local check groups. Live MySQL checks and native GUI
+acceptance are separate procedures in the testing guide. Generate API documentation
+with IntelliJ's **Tools > Generate JavaDoc** using the [development settings](docs/development.md#generate-javadocs).
