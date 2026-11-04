@@ -26,8 +26,8 @@ flowchart TD
     T -. failure .-> E
 ```
 
-A graphical display is required. Headless environments can run checks and render
-preview panels, but cannot operate the native application window.
+A graphical display is required to operate the application window. Automated local
+checks run in a headless environment.
 
 ## Navigation and refresh
 
@@ -39,12 +39,14 @@ work, while record-changing actions and Refresh all are disabled.
 A workspace refresh obtains one LibrarySnapshot. Its records, reporting date,
 and fine rate feed all table rows, statuses, and overview totals. The snapshot is
 prepared outside the event thread; tables and summary cards update together on
-that thread. Refresh preserves filter selections.
+that thread. Books starts on Active and Loans starts on Current. Refresh preserves
+filter selections; Clear filters selects All.
 
 ## Add and edit
 
 1. Choose the relevant section and an add/register action, or select a row to edit.
-2. Complete the form. Existing details are prefilled for editing; identifiers stay fixed.
+2. Complete the form. Editing prefills existing details and keeps identifiers fixed.
+   Add copy in Books uses the selected active title’s ISBN and asks for a Copy ID.
 3. Cancel closes the form without calling the service.
 4. On confirmation, the background worker calls Library.
 5. Model/service validation runs before the repository write.
@@ -58,7 +60,7 @@ sequenceDiagram
     participant UI as LibraryWindow / worker
     participant Library
     participant Repo as LibraryRepository
-    Librarian->>UI: Check out copy + Copy ID + Member ID
+    Librarian->>UI: Copies: select copy, check out, choose member
     UI->>Library: checkoutBook(copyId, memberId)
     Library->>Repo: Read records for validation
     Library->>Library: Check participants, archive state, and availability
@@ -80,10 +82,10 @@ constraint preventing two active loans for the same copy.
 ```mermaid
 stateDiagram-v2
     [*] --> Available
-    Available --> Active: Check out copy
+    Available --> Active: Check out selected copy
     Active --> Overdue: Reporting date passes due date
-    Active --> Available: Return copy and retain completed loan
-    Overdue --> Available: Return copy and cap charge at return date
+    Active --> Available: Return selected loan and retain history
+    Overdue --> Available: Return selected loan and cap late charge
     Available --> Archived: Archive title after all copies returned
     Archived --> Available: Restore title
 ```
@@ -91,14 +93,14 @@ stateDiagram-v2
 The date transition is calculated when records are read; there is no scheduler
 that writes an overdue flag. A return locates the active loan and validates the
 return date. The repository saves first, then marks the supplied object returned.
-History remains visible and the late charge stops increasing.
+The completed loan is available under Returned or All; its late charge stops increasing.
 
 ## Archive and restore
 
-Select a title, choose Archive or Restore, and confirm. Cancellation does nothing.
-Archive is rejected while any copy of that title has an active loan. The change
+Select an eligible title, choose Archive selected book or Restore selected book, and confirm. Cancellation does nothing.
+Archive is disabled while any copy of that title has an active loan. The change
 applies to lending eligibility for every copy, without deleting records. Restore
-re-enables unborrowed copies. Repeating an already applied transition is harmless.
+re-enables unborrowed copies.
 
 ## Export
 
@@ -116,5 +118,6 @@ or failure appears in a dialog; library records are unchanged.
 - A connection lost during a write can leave its outcome uncertain; reload before retrying.
 - Close is deferred while a record or export operation runs. Temporary sessions ask before
   discarding records. Persistent sessions close without deleting saved data.
+- Closing saves local column widths and, in normal window mode, the window size.
 - Sample population commits individual additions. Successful additions remain if
   a later insert fails; rerunning population resumes from existing records.

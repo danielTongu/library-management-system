@@ -4,6 +4,29 @@ The authoritative DDL is [database/schema.sql](../database/schema.sql). It is bu
 as `/database/schema.sql` by Maven. Database creation remains separate in
 [create-database.sql](../database/create-database.sql).
 
+## Schema-first design reference
+
+For this design, start with the schema: tables identify stored records, columns
+identify their stored fields, primary keys identify records, and foreign keys
+identify relationships. Model objects represent those fields and links; JDBC maps
+the objects to rows; Library applies workflows; GUI sections display each record's
+fields in order, inserting related details immediately after each foreign-key ID
+before continuing with the remaining fields.
+
+| Foreign key | Model relationship | Related GUI information |
+| --- | --- | --- |
+| book_copies.isbn → books.isbn | BookCopy.book | Book title and author in Copies |
+| loans.copy_id → book_copies.copy_id | Loan.copy | Copy ID, then book ISBN/title/author in Loans |
+| loans.member_id → members.member_id | Loan.member | Member ID, then borrower name in Loans |
+| book_archive.isbn → books.isbn | Book.archived | Active/Archived catalog status |
+
+A book's copies, a member's borrowing, and a copy's current borrower are reverse
+lookups through these foreign keys. Model relationships use objects rather than
+repeating every foreign-key ID as another mutable field. Calculated availability,
+loan status, and fines come from those records and policy. The generated
+`active_copy_id` exists to enforce a database constraint; it is not a user-entered
+model field or GUI column. None of these displays requires duplicating stored data.
+
 ```mermaid
 erDiagram
     books ||--o{ book_copies : has
@@ -69,10 +92,9 @@ availability, and archive policy before saving.
 
 BookCopy is a record with `copyId()` and `book()` accessors. Its components cannot
 be reassigned, but the referenced Book can still be edited. Record equality compares
-both components; Book currently uses object identity. BookCopy references Book; Loan references BookCopy and Member. Application loans
+both components; Book uses object identity. BookCopy references Book; Loan references BookCopy and Member. Application loans
 receive UUIDs, while canonical sample loans have fixed IDs. Updating title/contact
-fields retains identity. Archiving is stored separately so existing tables do not
-need a destructive rebuild. Restore updates archive state without deleting history.
+fields retains identity. Book archive state is stored in book_archive, keyed by ISBN. Restore updates archive state without deleting history.
 
 Overdue status, availability, fine amount, and overview totals are calculated;
 they are not redundant status columns. The daily fine rate and currency are not

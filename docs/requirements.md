@@ -20,15 +20,17 @@ storage connection and are configured separately.
 | FR-03 | Manage titles | Add titles, find them through search, and edit title/author while retaining ISBN |
 | FR-04 | Manage physical copies | Give each copy a unique ID and associate it with an existing active title |
 | FR-05 | Manage members | Register borrowers and edit names/emails while retaining member IDs |
-| FR-06 | Check out books | Associate an available copy with a registered member and a fourteen-day due date |
-| FR-07 | Record returns | Complete the active loan, retain history, and make the copy available again |
+| FR-06 | Check out books | Choose an available copy and registered member; preselect copies from the table and apply a fourteen-day due date |
+| FR-07 | Record returns | Return a selected active or overdue loan in Loans; retain history and restore copy availability |
 | FR-08 | Calculate late charges | Count overdue calendar days at the configured daily rate; stop at return |
 | FR-09 | Archive and restore | Archive a title after all copies are returned; retain records and restore lending later |
-| FR-10 | Search and sort | Literal case-insensitive search across displayed columns, exact status filters, numeric/date-aware sorting |
+| FR-10 | Search and sort | Literal search, status filters, numeric/date-aware sorting; Books starts Active and Loans starts Current |
 | FR-11 | Show overview totals | Catalog, availability, members, borrowing, overdue counts, and separate current/returned late charges |
 | FR-12 | Export reports | Export the displayed row/column order to a new UTF-8 CSV file without replacing an existing file |
 | FR-13 | Populate examples | SampleData supplies memory examples or adds missing MySQL examples without resetting existing changes |
-| FR-14 | Explain workflows and errors | Each section has guidance; errors appear in dialogs; background activity is visible |
+| FR-14 | Explain workflows and errors | Guidance, errors, and background activity are visible; selection actions disable for ineligible rows or busy state |
+| FR-15 | Show current possession | Foreign keys are immediately followed by related details before the remaining fields continue; Books shows copy counts/current borrowers; Copies shows book and borrower details; Members shows current loan counts and links to filtered Loans; Loans includes its ID, checkout date, and book/member details; full record details and a member-to-current-loans shortcut are available |
+| FR-16 | Remember local layout | Restore window size and column widths, bounded by screen/column limits; layout settings stay separate from records |
 
 `--database --sample` explicitly adds examples to persistent storage before opening.
 
@@ -55,7 +57,7 @@ storage connection and are configured separately.
 
 ## Nonfunctional requirements
 
-| ID | Requirement | Current design and evidence |
+| ID | Requirement | Design |
 | --- | --- | --- |
 | NFR-01 | Separation of responsibilities | Models validate fields; service owns workflows; repositories store records; UI presents them |
 | NFR-02 | Responsive desktop | Background workers perform storage and export operations; Swing components update on the event thread |
@@ -74,13 +76,11 @@ entities. The desktop serializes record-changing operations; a snapshot must not
 be mutated while rendering.
 
 MySQL field lengths are enforced by the schema; memory mode only checks model
-validation. Reads currently load the full library, so large deployments require
-query/paging work. Sample population is resumable, not one atomic transaction.
+validation. Reads load the full library. Sample population is resumable, not one atomic transaction.
 The schema initializer creates missing tables; it is not a migration system.
 
 Out of scope: reservations, renewals, payments, notifications, authentication,
 network clients, CSV import, installers, and a standalone executable distribution.
 
-Feature code and local checks are implemented. Release acceptance still requires
-live MySQL restart verification and native GUI/dialog checks on macOS and Windows.
-See [testing](testing.md) for evidence and the acceptance procedure.
+Acceptance includes live MySQL restart verification and native GUI/dialog checks
+on macOS and Windows. See [testing](testing.md) for coverage and procedures.

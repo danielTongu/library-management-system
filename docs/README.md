@@ -1,6 +1,6 @@
 # Software documentation
 
-This documentation describes the implemented GUI-only library application.
+This documentation describes the desktop library application.
 
 | Document | Purpose |
 | --- | --- |
@@ -11,7 +11,6 @@ This documentation describes the implemented GUI-only library application.
 | [User guide](user-guide.md) | Everyday desktop workflows |
 | [Testing and verification](testing.md) | Automated groups, live database check, and manual acceptance checks |
 | [Development guide](development.md) | Build, Javadocs, layout review, and change conventions |
-| [Project audit](audit.md) | Cleanup findings, corrections, and remaining verification tasks |
 | [Database setup](../database/README.md) | Canonical macOS/Windows MySQL setup instructions |
 
 Start with requirements and application flow. Developers should then read the

@@ -3,7 +3,7 @@
 ## Tools and build
 
 Use JDK 27 and Maven, or IntelliJ's bundled Maven. Set the project SDK, module SDK,
-Main JRE, and Maven runner JRE consistently. The project has no Makefile requirement.
+Main JRE, and Maven runner JRE consistently.
 Maven dependencies/plugins must be available locally or downloaded during setup.
 
 - Compile: `mvn compile` or IntelliJ Build Project.
@@ -47,8 +47,8 @@ save-success/refresh-failure; avoid narrating obvious assignments or loops.
 
 Run Main with `--sample` in IntelliJ and review all five sections at standard
 and minimum window sizes. Check focus, forms, confirmations, and save dialogs.
-Capture updated screenshots into `images/` when the layout changes. Existing
-images are references from an earlier rendered session, not automatically updated.
+Save reference screenshots in `images/`. Sample statuses and late charges depend
+on the reporting date.
 
 ## Change workflow
 
@@ -73,17 +73,8 @@ exports, credentials/local configuration, IDE metadata, logs, JVM diagnostics,
 and operating-system metadata. Commit source, tests, documentation, DDL, and pom.xml.
 Use `exports/` for local reports when choosing a save destination.
 
-Ignoring a file does not remove an already indexed file. If IDE settings are
-already staged/tracked, run this from the project folder to untrack them while
-keeping local files:
-
-```text
-git rm -r --cached -- .idea
-```
-
-Review `git status` before committing. The local IDE files have been
-untracked and their absence from the index verified. No automatic commits or
-broad restaging were performed.
+Review `git status` before committing. Keep local IDE configuration and credentials
+out of version control.
 
 ## UI layout
 
@@ -100,3 +91,11 @@ project/
 ```
 
 Save reference screenshots in `images/`.
+
+## Local layout settings
+
+UiPreferences stores window dimensions and section/header column widths in
+`.library-management-system/ui.properties` under the user's home directory on
+macOS and Windows. These are optional layout settings, independent of MySQL and
+in-memory records. UI preference checks use disposable files, never the real user
+settings. Do not commit local settings or add preferences to database tables.

@@ -1,5 +1,12 @@
 # Architecture
 
+## Design reference
+
+Use the [schema and its foreign keys](data-model.md#schema-first-design-reference)
+as the starting point for stored fields and relationships. Models, repository
+mapping, service workflows, and GUI record sections build on that definition.
+The GUI presents readable relationships through Library rather than running SQL.
+
 ## Component boundaries
 
 ```mermaid
@@ -40,15 +47,13 @@ MySQL mode uses JDBC and explicitly initializes missing tables before the GUI st
 | `images/` | Versioned UI reference screenshots at the project root |
 
 UI source lives directly in ui; tests use the same package. SQL and database setup documentation live
-in `database/`. There is one production class for each responsibility; generated
-classes and API documentation are excluded from Git. UI reference screenshots
+in `database/`. Generated classes and API documentation are excluded from Git. UI reference screenshots
 are versioned in `images/`.
 
 ## Write ownership
 
-Library is the application API. Repositories are storage APIs, not alternate
-librarian interfaces. Repeated method names across these boundaries express
-validation versus storage responsibilities, rather than duplicated workflows.
+Library validates application workflows. LibraryRepository defines record storage
+operations for the memory and JDBC implementations.
 Models do not perform I/O. Repository inserts assume service-validated records;
 SampleData intentionally uses that low-level contract to add historical examples.
 
@@ -67,7 +72,7 @@ opening additional connections per copy or loan.
 JDBC load uses a repeatable-read transaction for a related data view. Lists are
 read-only; entities inside them remain mutable, especially in memory mode. This
 is an operation-scoped reporting view, not an immutable historical snapshot.
-Read methods still load the full dataset; targeted queries and pagination are future work.
+Read methods load the full dataset.
 
 ## Desktop composition
 
@@ -75,6 +80,8 @@ Read methods still load the full dataset; targeted queries and pagination are fu
 - LibraryWindow wires forms, record actions, worker lifecycle, and close handling.
 - LibraryWorkspace owns sidebar navigation, page cards, storage badge, and status footer.
 - SectionPanel supplies the title, explanation, and action area.
+- UiPreferences stores optional local layout sizes independently of library records.
+- CheckoutForm selects copy/member identities from the latest display snapshot; Library revalidates checkout before saving.
 - OverviewDashboard highlights values already present in overview rows.
 - RecordTable owns read-only tables, sorting, search, status filters, and export selection.
 - RecordCellRenderer and LibraryTheme centralize visual presentation.
