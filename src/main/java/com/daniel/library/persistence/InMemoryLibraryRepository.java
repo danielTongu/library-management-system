@@ -39,15 +39,15 @@ public class InMemoryLibraryRepository implements LibraryRepository {
 
     @Override
     public void updateBook(Book book) {
-        Book stored = books.stream().filter(entry -> entry.getIsbn().equals(book.getIsbn())).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Book not found."));
+        Book stored = books.stream().filter(entry -> entry.getIsbn().equals(book.getIsbn()))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Book not found."));
         stored.updateDetails(book.getTitle(), book.getAuthor());
     }
 
     @Override
     public void setBookArchived(String isbn, boolean archived) {
-        Book book = books.stream().filter(entry -> entry.getIsbn().equals(isbn)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Book not found."));
+        Book book = books.stream().filter(entry -> entry.getIsbn().equals(isbn))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Book not found."));
         book.setArchived(archived);
     }
 
@@ -64,8 +64,7 @@ public class InMemoryLibraryRepository implements LibraryRepository {
     @Override
     public void updateMember(Member member) {
         Member stored = members.stream().filter(entry -> entry.getMemberId().equals(member.getMemberId()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Member not found."));
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Member not found."));
 
         stored.updateDetails(member.getName(), member.getEmail());
     }
