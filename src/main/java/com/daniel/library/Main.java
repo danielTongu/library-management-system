@@ -1,7 +1,7 @@
 package com.daniel.library;
 
 import com.daniel.library.demo.SampleData;
-import com.daniel.library.persistence.DatabaseSettings;
+import com.daniel.library.persistence.JdbcConnectionSettings;
 import com.daniel.library.persistence.JdbcLibraryRepository;
 import com.daniel.library.service.Library;
 import com.daniel.library.ui.LibraryApp;
@@ -31,7 +31,7 @@ public final class Main {
         try {
             Library library;
             if (persistent) {
-                JdbcLibraryRepository repository = new JdbcLibraryRepository(DatabaseSettings.fromEnvironment());
+                JdbcLibraryRepository repository = new JdbcLibraryRepository(JdbcConnectionSettings.fromEnvironment());
                 repository.initializeSchema();
                 if (options.contains("--sample")) {
                     SampleData.populate(repository);

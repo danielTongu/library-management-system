@@ -12,7 +12,7 @@ import java.util.Map;
  * @param username database account name
  * @param password account password; callers must not log or commit it
  */
-public record DatabaseSettings(String url, String username, String password) {
+public record JdbcConnectionSettings(String url, String username, String password) {
     /**
      * Reads LIBRARY_DB_URL, LIBRARY_DB_USER, and LIBRARY_DB_PASSWORD.
      * URL defaults to localhost/library_management and user to library_user.
@@ -20,7 +20,7 @@ public record DatabaseSettings(String url, String username, String password) {
      * @return configured connection settings
      * @throws IllegalArgumentException if the password is missing or blank
      */
-    public static DatabaseSettings fromEnvironment() {
+    public static JdbcConnectionSettings fromEnvironment() {
         Map<String, String> env = System.getenv();
         String url = env.getOrDefault("LIBRARY_DB_URL", "jdbc:mysql://localhost:3306/library_management");
         String username = env.getOrDefault("LIBRARY_DB_USER", "library_user");
@@ -30,7 +30,7 @@ public record DatabaseSettings(String url, String username, String password) {
             throw new IllegalArgumentException("Set LIBRARY_DB_PASSWORD in the IntelliJ run configuration.");
         }
 
-        return new DatabaseSettings(url, username, password);
+        return new JdbcConnectionSettings(url, username, password);
     }
 
     /**
@@ -45,6 +45,6 @@ public record DatabaseSettings(String url, String username, String password) {
 
     @Override
     public String toString() {
-        return "DatabaseSettings[credentials hidden]";
+        return "JdbcConnectionSettings[credentials hidden]";
     }
 }

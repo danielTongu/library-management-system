@@ -13,7 +13,7 @@ The GUI presents readable relationships through Library rather than running SQL.
 flowchart TB
     Main --> LibraryApp
     Main --> SampleData
-    Main --> DatabaseSettings
+    Main --> JdbcConnectionSettings
     Main --> JDBC[JdbcLibraryRepository]
     LibraryApp --> UI[LibraryWindow and workspace components]
     UI --> Library

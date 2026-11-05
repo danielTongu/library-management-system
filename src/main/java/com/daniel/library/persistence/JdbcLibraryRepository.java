@@ -27,14 +27,14 @@ import java.util.Map;
  * Writes are committed individually; multi-step sample population is resumable rather than atomic.
  */
 public class JdbcLibraryRepository implements LibraryRepository {
-    private final DatabaseSettings settings;
+    private final JdbcConnectionSettings settings;
 
     /**
      * Configures storage without opening a connection.
      *
      * @param settings connection URL and credentials
      */
-    public JdbcLibraryRepository(DatabaseSettings settings) {
+    public JdbcLibraryRepository(JdbcConnectionSettings settings) {
         this.settings = settings;
     }
 

@@ -12,12 +12,12 @@ import java.util.UUID;
 /** Requires a dedicated library_management_test database and MySQL driver on the classpath. */
 public class JdbcPersistenceChecks {
     public static void main(String[] args) throws Exception {
-        DatabaseSettings original = DatabaseSettings.fromEnvironment();
+        JdbcConnectionSettings original = JdbcConnectionSettings.fromEnvironment();
         String testUrl = System.getenv("LIBRARY_TEST_DB_URL");
         if (!"jdbc:mysql://localhost:3306/library_management_test".equals(testUrl)) {
             throw new IllegalArgumentException("Set LIBRARY_TEST_DB_URL to jdbc:mysql://localhost:3306/library_management_test");
         }
-        DatabaseSettings settings = new DatabaseSettings(testUrl, original.username(), original.password());
+        JdbcConnectionSettings settings = new JdbcConnectionSettings(testUrl, original.username(), original.password());
         JdbcLibraryRepository repository = new JdbcLibraryRepository(settings);
         repository.initializeSchema();
         String id = UUID.randomUUID().toString();
@@ -74,7 +74,7 @@ public class JdbcPersistenceChecks {
         }
     }
 
-    private static void cleanup(DatabaseSettings settings, String id) throws Exception {
+    private static void cleanup(JdbcConnectionSettings settings, String id) throws Exception {
         try (Connection connection = settings.openConnection()) {
             for (String sql : new String[]{"DELETE FROM loans WHERE copy_id = ?",
                     "DELETE FROM book_copies WHERE copy_id = ?", "DELETE FROM members WHERE member_id = ?",
