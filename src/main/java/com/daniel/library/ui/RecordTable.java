@@ -206,6 +206,7 @@ class RecordTable extends JPanel {
         memberScope.setForeground(LibraryTheme.ACCENT);
         memberScope.setBorder(BorderFactory.createEmptyBorder(0, 14, 10, 14));
         memberScope.setVisible(false);
+
         JPanel searchPanel = new JPanel(new BorderLayout());
         searchPanel.setOpaque(false);
         searchPanel.add(filters, BorderLayout.NORTH);
@@ -215,17 +216,20 @@ class RecordTable extends JPanel {
         JButton export = LibraryTheme.button("Export CSV", false);
         export.addActionListener(event -> exportRecords(export));
         export.setToolTipText("Export displayed records to CSV");
+
         JPanel footer = new JPanel(new BorderLayout());
         footer.setBackground(LibraryTheme.SURFACE);
         footer.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
         count.setForeground(LibraryTheme.MUTED);
         count.setFont(LibraryTheme.font(12, Font.PLAIN));
         footer.add(count, BorderLayout.WEST);
+
         JButton details = LibraryTheme.button("View details", false);
         details.setEnabled(false);
         details.setToolTipText("Select a row to read all its details, including current borrowing");
         table.getSelectionModel().addListSelectionListener(event -> details.setEnabled(table.getSelectedRow() >= 0));
         details.addActionListener(event -> showSelectedDetails());
+
         JPanel reportActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         reportActions.setOpaque(false);
         reportActions.add(details);

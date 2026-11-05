@@ -94,10 +94,10 @@ final class LibraryWorkspace extends JPanel {
             menu.add(Box.createVerticalStrut(6));
         }
 
-        JLabel help = new JLabel("<html>Your library, organized.<br>Books, readers, and<br>borrowing.</html>");
+        JLabel help = new JLabel("<html>Your library, organized.<br>Books, readers, & borrowing.</html>");
         help.setOpaque(false);
         help.setForeground(new Color(0xA6BEC1));
-        help.setFont(LibraryTheme.font(12, Font.PLAIN));
+        help.setFont(LibraryTheme.font(10, Font.PLAIN));
         help.setBorder(BorderFactory.createEmptyBorder(16, 8, 0, 8));
 
         sidebar.add(brand, BorderLayout.NORTH);
@@ -110,9 +110,11 @@ final class LibraryWorkspace extends JPanel {
     private JPanel header(boolean persistent) {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(LibraryTheme.SURFACE);
+
         header.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(0, 0, 1, 0, LibraryTheme.BORDER),
-                BorderFactory.createEmptyBorder(14, 26, 14, 26)));
+                BorderFactory.createEmptyBorder(14, 26, 14, 26)
+        ));
 
         JLabel title = new JLabel("LIBRARY WORKSPACE");
         title.setFont(LibraryTheme.font(11, Font.BOLD));
@@ -144,9 +146,11 @@ final class LibraryWorkspace extends JPanel {
     private JPanel footer(JLabel status, JButton refresh) {
         JPanel footer = new JPanel(new BorderLayout(14, 0));
         footer.setBackground(LibraryTheme.SURFACE);
+
         footer.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, LibraryTheme.BORDER),
-                BorderFactory.createEmptyBorder(10, 26, 10, 26)));
+                BorderFactory.createEmptyBorder(10, 26, 10, 26)
+        ));
 
         status.setFont(LibraryTheme.font(12, Font.PLAIN));
         status.setForeground(LibraryTheme.MUTED);

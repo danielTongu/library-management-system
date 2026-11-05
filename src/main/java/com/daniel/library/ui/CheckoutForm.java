@@ -19,16 +19,20 @@ final class CheckoutForm extends JPanel {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(LibraryTheme.SURFACE);
         setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+
         for (Object[] row : records.copies()) {
             if (row[LibrarySection.COPIES.columnIndex("Status")].equals("Available")) {
-                copies.addItem(new Choice(row[LibrarySection.COPIES.columnIndex("Copy ID")].toString(),
+                copies.addItem(new Choice(
+                        row[LibrarySection.COPIES.columnIndex("Copy ID")].toString(),
                         row[LibrarySection.COPIES.columnIndex("Title")].toString()));
             }
         }
         for (Object[] row : records.members()) {
-            members.addItem(new Choice(row[LibrarySection.MEMBERS.columnIndex("Member ID")].toString(),
+            members.addItem(new Choice(
+                    row[LibrarySection.MEMBERS.columnIndex("Member ID")].toString(),
                     row[LibrarySection.MEMBERS.columnIndex("Name")].toString()));
         }
+
         copies.setSelectedIndex(-1);
         members.setSelectedIndex(-1);
         for (int index = 0; index < copies.getItemCount(); index++) {
@@ -64,11 +68,14 @@ final class CheckoutForm extends JPanel {
         label.setLabelFor(choices);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         label.setForeground(LibraryTheme.INK);
+
         LibraryTheme.comboBox(choices);
+
         choices.setAlignmentX(Component.LEFT_ALIGNMENT);
         choices.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         choices.setPreferredSize(new Dimension(480, 40));
         choices.setPrototypeDisplayValue(new Choice("M000", "Select a record"));
+
         add(label);
         add(Box.createVerticalStrut(6));
         add(choices);

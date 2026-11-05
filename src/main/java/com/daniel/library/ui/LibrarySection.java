@@ -20,7 +20,9 @@ public enum LibrarySection {
      */
     COPIES("Copies",
             "A copy is one physical book that someone can borrow. " +
-                    "Each copy has its own Copy ID; several copies can share a book's ISBN. See who has each checked-out copy and when it is due. Select an available row to check it out. Record returns in Loans.",
+                    "Each copy has its own Copy ID; several copies can share a book's ISBN. " +
+                    "See who has each checked-out copy and when it is due. Select an available row to check it out. " +
+                    "Record returns in Loans.",
             List.of("Copy ID", "ISBN", "Title", "Author", "Status", "Member ID", "Borrower", "Due"),
             List.of("All", "Available", "Checked out", "Archived")
     ),
@@ -28,8 +30,8 @@ public enum LibrarySection {
      * Registered borrower contact records.
      */
     MEMBERS("Members",
-            "Members are the people registered to borrow books. Register each person with a unique "
-                    + "Member ID. Current loans counts the copies they still have. Select a member and choose View current loans to review or return them.",
+            "Members are the people registered to borrow books. Register each person with a unique Member ID. " +
+                    "Current loans counts the copies they still have. Select a member and choose View current loans to review or return them.",
             List.of("Member ID", "Name", "Email", "Current loans"),
             List.of()
     ),

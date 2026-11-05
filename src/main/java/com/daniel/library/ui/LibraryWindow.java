@@ -198,8 +198,7 @@ public class LibraryWindow extends JFrame {
             JOptionPane.showMessageDialog(this, "Register a member in Members before checking out a copy.");
             return;
         }
-        while (JOptionPane.showConfirmDialog(this, form, "Check out copy", JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+        while (JOptionPane.showConfirmDialog(this, form, "Check out copy", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
             String copyId = form.selectedCopyId();
             String memberId = form.selectedMemberId();
             if (copyId != null && memberId != null) {
@@ -222,8 +221,7 @@ public class LibraryWindow extends JFrame {
         }
         String copyId = selected[section.columnIndex("Copy ID")];
         String title = selected[section.columnIndex("Title")];
-        String borrower = selected[section.columnIndex("Member")] + " ("
-                + selected[section.columnIndex("Member ID")] + ")";
+        String borrower = selected[section.columnIndex("Member")] + " (" + selected[section.columnIndex("Member ID")] + ")";
         confirmReturn(copyId, title, borrower);
     }
 
@@ -273,8 +271,13 @@ public class LibraryWindow extends JFrame {
         if (selected == null) {
             return;
         }
-        String[] values = populatedForm("Edit book: " + selected[section.columnIndex("ISBN")],
-                new String[]{"Title", "Author"}, new String[]{selected[section.columnIndex("Title")], selected[section.columnIndex("Author")]});
+
+        String[] values = populatedForm(
+                "Edit book: " + selected[section.columnIndex("ISBN")],
+                new String[]{"Title", "Author"},
+                new String[]{selected[section.columnIndex("Title")], selected[section.columnIndex("Author")]}
+        );
+
         if (values != null) {
             perform(() -> {
                 library.updateBook(selected[section.columnIndex("ISBN")], values[0], values[1]);
@@ -289,8 +292,13 @@ public class LibraryWindow extends JFrame {
         if (selected == null) {
             return;
         }
-        String[] values = populatedForm("Edit member: " + selected[section.columnIndex("Member ID")],
-                new String[]{"Name", "Email"}, new String[]{selected[section.columnIndex("Name")], selected[section.columnIndex("Email")]});
+
+        String[] values = populatedForm(
+                "Edit member: " + selected[section.columnIndex("Member ID")],
+                new String[]{"Name", "Email"},
+                new String[]{selected[section.columnIndex("Name")], selected[section.columnIndex("Email")]}
+        );
+
         if (values != null) {
             perform(() -> {
                 library.updateMember(selected[section.columnIndex("Member ID")], values[0], values[1]);
@@ -311,13 +319,16 @@ public class LibraryWindow extends JFrame {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         actions.add(selectionButton("Return selected loan", loans, this::returnSelectedLoan,
                 row -> row[LibrarySection.LOANS.statusColumn()].equals("Active")
-                        || row[LibrarySection.LOANS.statusColumn()].equals("Overdue")));
+                        || row[LibrarySection.LOANS.statusColumn()].equals("Overdue"))
+        );
+
         return new SectionPanel(LibrarySection.LOANS, loans, actions);
     }
 
     private JButton button(String label, Runnable action) {
         boolean primary = label.startsWith("Add ") || label.startsWith("Register ")
                 || label.startsWith("Check out") || label.equals("Return selected loan");
+
         JButton button = LibraryTheme.button(label, primary);
         button.addActionListener(event -> action.run());
         buttons.add(button);

@@ -61,8 +61,10 @@ public class InMemoryLibraryRepository implements LibraryRepository {
 
     @Override
     public void updateMember(Member member) {
-        Member stored = members.stream().filter(entry -> entry.getMemberId().equals(member.getMemberId())).findFirst()
+        Member stored = members.stream().filter(entry -> entry.getMemberId().equals(member.getMemberId()))
+                .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Member not found."));
+
         stored.updateDetails(member.getName(), member.getEmail());
     }
 

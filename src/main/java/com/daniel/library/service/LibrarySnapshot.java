@@ -44,8 +44,8 @@ public record LibrarySnapshot(LibraryData records, LocalDate asOfDate, BigDecima
      * @return true when its title is active and no active loan refers to the copy
      */
     public boolean isAvailable(BookCopy copy) {
-        return !copy.book().isArchived() && records.loans().stream().noneMatch(loan -> loan.isActive()
-                && loan.getCopy().copyId().equals(copy.copyId()));
+        return !copy.book().isArchived() && records.loans().stream()
+                .noneMatch(loan -> loan.isActive() && loan.getCopy().copyId().equals(copy.copyId()));
     }
 
     /**
@@ -98,8 +98,19 @@ public record LibrarySnapshot(LibraryData records, LocalDate asOfDate, BigDecima
         int archivedCopies = (int) records.copies().stream().filter(copy -> copy.book().isArchived()).count();
         int available = (int) records.copies().stream().filter(copy -> !copy.book().isArchived() && !borrowedCopies.contains(copy.copyId())).count();
 
-        return new LibrarySummary(asOfDate, records.books().size(), archivedTitles, records.copies().size(), available,
-                archivedCopies, records.members().size(), current, overdue, records.loans().size() - current,
-                currentCharges, returnedCharges);
+        return new LibrarySummary(
+                asOfDate,
+                records.books().size(),
+                archivedTitles,
+                records.copies().size(),
+                available,
+                archivedCopies,
+                records.members().size(),
+                current,
+                overdue,
+                records.loans().size() - current,
+                currentCharges,
+                returnedCharges
+        );
     }
 }

@@ -39,6 +39,7 @@ public record LibraryRecords(List<Object[]> books, List<Object[]> copies, List<O
         Map<String, Loan> loansByCopy = new HashMap<>();
         Map<String, List<Loan>> loansByMember = new HashMap<>();
         Map<String, List<Loan>> loansByBook = new HashMap<>();
+
         for (Loan loan : snapshot.records().loans()) {
             if (loan.isActive()) {
                 loansByCopy.put(loan.getCopy().copyId(), loan);
@@ -46,15 +47,14 @@ public record LibraryRecords(List<Object[]> books, List<Object[]> copies, List<O
                 loansByBook.computeIfAbsent(loan.getCopy().book().getIsbn(), key -> new ArrayList<>()).add(loan);
             }
         }
+
         List<Object[]> bookRows = new ArrayList<>();
         for (Book book : snapshot.records().books()) {
             String state = book.isArchived() ? "Archived" : "Active";
             String borrowers = loansByBook.getOrDefault(book.getIsbn(), List.of()).stream()
-                    .map(loan -> loan.getMember().getName() + " (" + loan.getMember().getMemberId() + "), "
-                            + loan.getCopy().copyId() + ", due " + loan.getDueDate())
+                    .map(loan -> loan.getMember().getName() + " (" + loan.getMember().getMemberId() + "), " + loan.getCopy().copyId() + ", due " + loan.getDueDate())
                     .collect(Collectors.joining("; "));
-            long copies = snapshot.records().copies().stream()
-                    .filter(copy -> copy.book().getIsbn().equals(book.getIsbn())).count();
+            long copies = snapshot.records().copies().stream().filter(copy -> copy.book().getIsbn().equals(book.getIsbn())).count();
             bookRows.add(new Object[]{book.getIsbn(), book.getTitle(), book.getAuthor(), state,
                     copies, borrowers.isEmpty() ? "None" : borrowers});
         }

@@ -47,7 +47,7 @@ final class LibraryTheme {
     /** Navigation background. */
     static final Color SIDEBAR = new Color(0x142D34);
 
-    /** Selected record background. */
+    /** Record selected background. */
     static final Color SELECTED = new Color(0xE1F1EC);
 
     /** Alternating table-row background. */
@@ -130,8 +130,11 @@ final class LibraryTheme {
         field.setBackground(SURFACE);
         field.setForeground(INK);
         field.setCaretColor(ACCENT);
-        field.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER, 1, true),
-                BorderFactory.createEmptyBorder(7, 10, 7, 10)));
+
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER, 1, true),
+                BorderFactory.createEmptyBorder(7, 10, 7, 10)
+        ));
     }
 
     /**
@@ -151,11 +154,13 @@ final class LibraryTheme {
                 return arrow;
             }
         });
+
         choices.setFont(font(13, Font.PLAIN));
         choices.setBackground(SURFACE);
         choices.setForeground(INK);
         choices.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
         DefaultListCellRenderer renderer = new DefaultListCellRenderer();
+
         choices.setRenderer((list, value, index, selected, focus) -> {
             JLabel label = (JLabel) renderer.getListCellRendererComponent(list, value, index, selected, focus);
             label.setText(value == null ? "Choose…" : value.toString());

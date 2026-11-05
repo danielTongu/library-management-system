@@ -22,8 +22,7 @@ public final class RecordFilter {
     public static boolean matches(Object[] row, String query, int statusColumn, String status) {
         if (statusColumn >= 0 && status != null && !status.equals("All")) {
             Object actual = row[statusColumn];
-            boolean matches = status.equals("Current")
-                    ? "Active".equals(actual) || "Overdue".equals(actual) : status.equals(actual);
+            boolean matches = status.equals("Current") ? "Active".equals(actual) || "Overdue".equals(actual) : status.equals(actual);
             if (!matches) {
                 return false;
             }

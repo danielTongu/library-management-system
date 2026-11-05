@@ -86,6 +86,7 @@ public class JdbcLibraryRepository implements LibraryRepository {
         Map<String, Member> members = new LinkedHashMap<>();
         Map<String, BookCopy> copies = new LinkedHashMap<>();
         List<Loan> loans = new ArrayList<>();
+
         try (Statement statement = connection.createStatement()) {
             String catalogSql = "SELECT b.isbn, b.title, b.author, COALESCE(a.archived, FALSE) AS archived FROM books b LEFT JOIN book_archive a ON a.isbn = b.isbn ORDER BY b.isbn";
             try (ResultSet rows = statement.executeQuery(catalogSql)) {
@@ -107,15 +108,16 @@ public class JdbcLibraryRepository implements LibraryRepository {
                     copies.put(copy.copyId(), copy);
                 }
             }
-
-            String sql = "SELECT * FROM loans ORDER BY checkout_date, loan_id";
-            try (ResultSet rows = statement.executeQuery(sql)) {
+            try (ResultSet rows = statement.executeQuery("SELECT * FROM loans ORDER BY checkout_date, loan_id")) {
                 while (rows.next()) {
-                    BookCopy copy = copies.get(rows.getString("copy_id"));
-                    Member member = members.get(rows.getString("member_id"));
-                    LocalDate checkoutDate = rows.getDate("checkout_date").toLocalDate();
-                    LocalDate dueDate = rows.getDate("due_date").toLocalDate();
-                    Loan loan = new Loan(rows.getString("loan_id"), copy, member, checkoutDate, dueDate);
+                    Loan loan = new Loan(
+                            rows.getString("loan_id"),
+                            copies.get(rows.getString("copy_id")),
+                            members.get(rows.getString("member_id")),
+                            rows.getDate("checkout_date").toLocalDate(),
+                            rows.getDate("due_date").toLocalDate()
+                    );
+
                     Date returned = rows.getDate("return_date");
 
                     if (returned != null) {
@@ -125,8 +127,7 @@ public class JdbcLibraryRepository implements LibraryRepository {
                 }
             }
         }
-        return new LibraryData(List.copyOf(books.values()), List.copyOf(copies.values()),
-                List.copyOf(members.values()), List.copyOf(loans));
+        return new LibraryData(List.copyOf(books.values()), List.copyOf(copies.values()), List.copyOf(members.values()), List.copyOf(loans));
     }
 
     @Override
@@ -141,8 +142,7 @@ public class JdbcLibraryRepository implements LibraryRepository {
     @Override
     public void setBookArchived(String isbn, boolean archived) {
         String sql = "INSERT INTO book_archive (isbn, archived) VALUES (?, ?) ON DUPLICATE KEY UPDATE archived = ?";
-        try (Connection connection = settings.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (Connection connection = settings.openConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, isbn);
             statement.setBoolean(2, archived);
             statement.setBoolean(3, archived);
@@ -189,8 +189,7 @@ public class JdbcLibraryRepository implements LibraryRepository {
 
     @Override
     public void addLoan(Loan loan) {
-        String sql = "INSERT INTO loans (loan_id, copy_id, member_id, checkout_date, due_date, return_date) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO loans (loan_id, copy_id, member_id, checkout_date, due_date, return_date) VALUES (?, ?, ?, ?, ?, ?)";
         execute(sql, statement -> {
             statement.setString(1, loan.getLoanId());
             statement.setString(2, loan.getCopy().copyId());
@@ -215,8 +214,7 @@ public class JdbcLibraryRepository implements LibraryRepository {
     }
 
     private void execute(String sql, StatementParameters parameters) {
-        try (Connection connection = settings.openConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (Connection connection = settings.openConnection(); PreparedStatement statement = connection.prepareStatement(sql)) {
             parameters.bind(statement);
             if (statement.executeUpdate() != 1) {
                 throw new IllegalStateException("Record changed elsewhere. Restart to reload database records.");
