@@ -2,7 +2,6 @@ package com.daniel.library.service;
 
 import com.daniel.library.demo.SampleData;
 import com.daniel.library.persistence.InMemoryLibraryRepository;
-import com.daniel.library.persistence.LibraryData;
 import com.daniel.library.ui.LibraryRecords;
 
 import java.math.BigDecimal;

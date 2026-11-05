@@ -1,2 +1,2 @@
-/** Interchangeable memory/MySQL record storage and runtime connection configuration. */
+/** Memory/MySQL implementations of the service storage contract and runtime connection configuration. */
 package com.daniel.library.persistence;

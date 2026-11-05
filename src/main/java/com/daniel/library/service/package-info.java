@@ -1,2 +1,2 @@
-/** Library workflows and reporting policy independent of Swing and JDBC. */
+/** Library workflows, reporting policy, storage contract, and related record data. */
 package com.daniel.library.service;

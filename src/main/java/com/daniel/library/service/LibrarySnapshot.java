@@ -3,7 +3,6 @@ package com.daniel.library.service;
 import com.daniel.library.model.Book;
 import com.daniel.library.model.BookCopy;
 import com.daniel.library.model.Loan;
-import com.daniel.library.persistence.LibraryData;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

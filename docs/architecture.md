@@ -41,8 +41,8 @@ MySQL mode uses JDBC and explicitly initializes missing tables before the GUI st
 | `com.daniel.library` | Entry point and launch flags |
 | `demo` | Canonical sample fixture and repeatable population |
 | `model` | Identity, local validation, and domain state |
-| `service` | Workflow validation, date/fine policy, and reporting snapshots |
-| `persistence` | Record storage contract, memory/JDBC implementations, configuration |
+| `service` | Workflow validation, date/fine policy, reporting snapshots, LibraryRepository, and LibraryData |
+| `persistence` | Memory/JDBC storage implementations and connection configuration |
 | `ui` | Desktop startup, window, workspace, components, styling, display data, and CSV export |
 | `images/` | Versioned UI reference screenshots at the project root |
 
@@ -52,8 +52,9 @@ are versioned in `images/`.
 
 ## Write ownership
 
-Library validates application workflows. LibraryRepository defines record storage
-operations for the memory and JDBC implementations.
+Library validates application workflows. The service package defines LibraryRepository
+and LibraryData: the storage contract and its related record result. The persistence
+package supplies the memory and JDBC implementations.
 Models do not perform I/O. Repository inserts assume service-validated records;
 SampleData intentionally uses that low-level contract to add historical examples.
 

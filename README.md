@@ -44,6 +44,9 @@ records. Window size and column widths are saved locally.
 - [Development and Javadocs](docs/development.md)
 - [UI reference images](images/README.md)
 
+Business workflows, the repository contract, and its record data live in `service/`.
+Memory and JDBC storage implementations live in `persistence/`.
+
 ## Verify
 
 Use JDK 27. In IntelliJ's Maven panel, choose **Lifecycle > test**, or run:

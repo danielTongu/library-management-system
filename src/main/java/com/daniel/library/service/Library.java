@@ -5,7 +5,6 @@ import com.daniel.library.model.BookCopy;
 import com.daniel.library.model.Loan;
 import com.daniel.library.model.Member;
 import com.daniel.library.persistence.InMemoryLibraryRepository;
-import com.daniel.library.persistence.LibraryRepository;
 
 import java.math.BigDecimal;
 import java.time.Clock;
