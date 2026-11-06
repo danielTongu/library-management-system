@@ -6,7 +6,7 @@ This documentation describes the desktop library application.
 | --- | --- |
 | [Requirements](requirements.md) | Scope, functional requirements, business rules, and limits |
 | [Application flow](application-flow.md) | Startup, navigation, borrowing, returns, archiving, and export |
-| [Architecture](architecture.md) | Package responsibilities, dependencies, threading, and storage boundaries |
+| [Architecture](architecture.md) | UML class diagrams, package responsibilities, threading, and storage boundaries |
 | [Data model](data-model.md) | Entities, MySQL tables, keys, constraints, and persistence behavior |
 | [User guide](user-guide.md) | Everyday desktop workflows |
 | [Testing and verification](testing.md) | Automated groups, live database check, and manual acceptance checks |
