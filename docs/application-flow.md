@@ -1,6 +1,10 @@
-# Application flow
+# 3. Behavior Design
 
-## Startup
+**Document ID:** LMS-BHV
+
+**Purpose:** dynamic design supplement to [Section 2](architecture.md#2-software-design-description).
+
+## 3.1. Startup sequence
 
 ```mermaid
 flowchart TD
@@ -26,33 +30,17 @@ flowchart TD
     T -. failure .-> E
 ```
 
-A graphical display is required to operate the application window. Automated local
-checks run in a headless environment.
+Launch configuration is defined in [Section 5.1](user-guide.md#51-launch); connection provisioning
+is defined in [LMS-DB](../database/README.md).
 
-## Navigation and refresh
+## 3.2. Refresh sequence
 
-The sidebar opens Overview, Books, Copies, Members, or Loans. The current section
-explains its purpose. Search, status choice, and sorting affect the table view;
-they do not change stored records. Navigation remains available during background
-work, while record-changing actions and Refresh all are disabled.
+A background worker requests one LibrarySnapshot, then LibraryRecords maps the report
+to table rows. The completion handler updates all Swing sections and overview values
+on the event thread. Navigation remains usable while record-changing actions and
+Refresh all are disabled. Filters remain attached to their table views.
 
-A workspace refresh obtains one LibrarySnapshot. Its records, reporting date,
-and fine rate feed all table rows, statuses, and overview totals. The snapshot is
-prepared outside the event thread; tables and summary cards update together on
-that thread. Books starts on Active and Loans starts on Current. Refresh preserves
-filter selections; Clear filters selects All.
-
-## Add and edit
-
-1. Choose the relevant section and an add/register action, or select a row to edit.
-2. Complete the form. Editing prefills existing details and keeps identifiers fixed.
-   Add copy in Books uses the selected active title’s ISBN and asks for a Copy ID.
-3. Cancel closes the form without calling the service.
-4. On confirmation, the background worker calls Library.
-5. Model/service validation runs before the repository write.
-6. Success refreshes the workspace; rejection shows an error without changing existing data.
-
-## Borrow a copy
+## 3.3. Checkout sequence
 
 ```mermaid
 sequenceDiagram
@@ -73,51 +61,31 @@ sequenceDiagram
     UI-->>Librarian: Updated copies, loans, totals, and due-date message
 ```
 
-An archived title or already borrowed copy is rejected. A storage failure does
-not publish a successful checkout in memory. Database mode also has a unique
-constraint preventing two active loans for the same copy.
+The service evaluates the eligibility rules in [Section 1.4](requirements.md#14-business-rules) before
+calling the repository. A rejected write does not publish the proposed loan.
 
-## Return and late charges
+## 3.4. Edit, return, and archive sequences
 
-```mermaid
-stateDiagram-v2
-    [*] --> Available
-    Available --> Active: Check out selected copy
-    Active --> Overdue: Reporting date passes due date
-    Active --> Available: Return selected loan and retain history
-    Overdue --> Available: Return selected loan and cap late charge
-    Available --> Archived: Archive title after all copies returned
-    Archived --> Available: Restore title
-```
+Forms collect input on the event thread. Cancellation ends the operation before any
+service call. Confirmed operations run in a worker and validate proposed changes
+before writing. A return persists its date before mutating the supplied loan.
+Editing and archive changes likewise save before publishing changed object state.
+A successful operation requests a fresh reporting snapshot.
 
-The date transition is calculated when records are read; there is no scheduler
-that writes an overdue flag. A return locates the active loan and validates the
-return date. The repository saves first, then marks the supplied object returned.
-The completed loan is available under Returned or All; its late charge stops increasing.
+## 3.5. Export sequence
 
-## Archive and restore
+The event thread captures the displayed rows and column order. An export worker
+writes UTF-8 data to a same-directory temporary file, moves the completed file to
+the chosen destination, and removes remaining temporary data. An existing destination
+is rejected. Export never changes repository records.
 
-Select an eligible title, choose Archive selected book or Restore selected book, and confirm. Cancellation does nothing.
-Archive is disabled while any copy of that title has an active loan. The change
-applies to lending eligibility for every copy, without deleting records. Restore
-re-enables unborrowed copies.
+## 3.6. Failure and shutdown sequences
 
-## Export
+Startup failures end launch with an error. Operation failures are reported by the
+window. Save success followed by refresh failure is reported distinctly: the saved
+operation is not rolled back. A connection loss during writing can leave the result
+uncertain; operator recovery is specified in [Section 5.7](user-guide.md#57-recover-from-errors-and-close).
 
-Export CSV captures displayed rows and column order after filtering and sorting.
-The user chooses a new filename. A background worker writes UTF-8 data to a
-same-directory temporary file, moves the completed file into place, and removes
-any remaining temporary file. Existing destinations are rejected. Export success
-or failure appears in a dialog; library records are unchanged.
-
-## Error and close paths
-
-- Startup errors appear before the workspace; no silent fallback to memory occurs.
-- A save may succeed while the following display refresh fails. The message asks
-  the user to refresh before repeating an action, because the save was not undone.
-- A connection lost during a write can leave its outcome uncertain; reload before retrying.
-- Close is deferred while a record or export operation runs. Temporary sessions ask before
-  discarding records. Persistent sessions close without deleting saved data.
-- Closing saves local column widths and, in normal window mode, the window size.
-- Sample population commits individual additions. Successful additions remain if
-  a later insert fails; rerunning population resumes from existing records.
+Close waits for active record/export work. A temporary session requires discard
+confirmation. On accepted close, column widths and normal-mode window dimensions
+are saved independently of library records.

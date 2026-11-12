@@ -1,162 +1,113 @@
-# User guide
+# 5. User Documentation
 
-## Open the library
+**Document ID:** LMS-USR
 
-Run Main in IntelliJ. With no arguments the library is temporary and empty.
-Use `--sample` for examples, `--database` for saved records, or
-`--database --sample` to add missing examples to MySQL. Follow the [database guide](../database/README.md)
-first if persistent storage is needed.
+**Audience:** librarian operating the desktop application.
 
-The header identifies Saved library or Temporary library. Temporary records are
-lost when the window closes; the application asks before discarding them.
+## 5.1. Launch
+
+Open the project in IntelliJ, reload Maven, and select JDK 27 for the project,
+module, and run configuration. Run `com.daniel.library.Main` on a graphical desktop.
+
+| Program arguments | Session |
+| --- | --- |
+| None | Empty temporary library |
+| `--sample` | Temporary library with examples |
+| `--database` | Saved MySQL library |
+| `--database --sample` | Saved library with missing examples added |
+
+For saved storage, complete [database installation](../database/README.md) first.
+The header identifies Temporary library or Saved library. Temporary records are
+lost on close. Use one running instance at a time.
 
 ![Overview workspace](../images/overview.png)
 
-## First borrowing workflow
+## 5.2. Register records and lend a copy
 
-1. **Books:** choose Add book. Enter ISBN, title, and author.
-2. **Books:** select the active title and choose Add copy. Enter a unique Copy ID;
-   the selected title and ISBN are fixed for this action. You can also add a copy
-   in Copies by entering its Copy ID and book ISBN.
-3. **Members:** choose Register member. Enter a unique Member ID, name, and email.
-4. **Copies:** select an Available copy and choose Check out selected copy. The copy is preselected; choose a registered borrower.
-5. Read the due date in the result message; Copies shows Checked out, the borrower, Member ID, and due date.
-6. In Loans, select an Active or Overdue row and choose Return selected loan.
-   Confirm the displayed copy and borrower.
-7. The loan leaves the Current view. Choose Returned or All to see it in history;
-   its copy is Available in Copies.
+1. In Books, choose Add book and enter ISBN, title, and author.
 
-An ISBN identifies a title; a Copy ID identifies one physical item. Two physical
-copies of one title share an ISBN but must have different Copy IDs. A Member ID
-identifies the borrower. A loan records one borrowing event.
+2. Select the title and choose Add copy. Enter a unique Copy ID; the title is fixed.
+   Alternatively, use Add copy in Copies and supply its ISBN.
 
-## Find and edit records
+3. In Members, choose Register member and enter Member ID, name, and email.
 
-Books opens on **Active** and Loans opens on **Current** (active plus overdue).
-Use Archived in Books to find archived titles, and Returned or All in Loans for history.
-These are startup defaults; refreshes retain your current filters. Clear filters
-removes search/member scope and selects All.
+4. In Copies, select an Available row and choose Check out selected copy.
 
-Use Search records to match text in any displayed column. Status filters can
-narrow books to Active/Archived, copies to Available/Checked out/Archived, or
-loans to Current/Active/Overdue/Returned. Current includes both Active and Overdue. Search and status work together. Clear filters
-restores the full table, and matching counts appear underneath.
+5. Choose a registered member explicitly and confirm. Read the due-date message.
 
-Selection actions are disabled until a suitable row is selected. Checkout requires
-an available copy; return requires an active or overdue loan. Restore requires an
-archived title. Archive requires an active title with no borrowed copies. Adding
-a copy from Books requires an active title. Actions also pause during background work.
+6. To return it, select its Active or Overdue row in Loans and choose Return selected loan.
 
-Click a column heading to sort. Amounts sort numerically and dates chronologically.
-Select a book or member row and choose Edit selected book/member. Existing details
-are prefilled. ISBN and Member ID cannot change. Cancel leaves the record untouched.
-If a replacement name, title, author, or email is invalid, the current details remain.
+7. Confirm the copy and borrower. Use Returned or All to view completed borrowing.
 
-In Loans, search a Member ID or name to see that person's borrowing records. In
-Copies, search an ISBN and select Available to find items ready for checkout.
-
-## Read the section columns
-
-Each record section follows its fields in order. When a foreign key appears, its
-related details follow immediately; the remaining record fields then continue:
-
-| Section | Own fields and foreign keys | Relationships and related details |
-| --- | --- | --- |
-| Books | ISBN, Title, Author, Status | Copy count, Current borrowers |
-| Copies | Copy ID, ISBN, Status | After ISBN: Title, Author; after Status: current loan Member ID, Borrower, Due |
-| Members | Member ID, Name, Email | Current loan count; View current loans opens related records |
-| Loans | Loan ID, Copy ID, Member ID, Checked out, Due, Returned, Status, Fine | After Copy ID: ISBN, Title, Author; after Member ID: Member |
-
-Copy ISBN links to Books; Loan Copy ID and Member ID link to Copies and Members.
-The borrower and due date on Copies come through its current loan. A loan's book
-information comes through its linked copy. Status and fine are calculated displays.
-Books shows copy counts and current borrowers; Members shows current loan counts.
-Overview remains a summary rather than a record table.
-
-Scroll horizontally for additional columns, or select **View details** to read the
-complete record. Search and CSV export include both field and relationship columns.
-
-## See who has a book
-
-- **Books:** Copies shows the total physical copy count. Current borrowers lists each checked-out copy, borrower name and Member ID, and due date.
-- **Copies:** each checked-out copy shows its current borrower and due date. Available copies have no borrower.
-- **Members:** Current loans counts the copies still held. Use View current loans to see titles, Copy IDs, and due dates in Loans.
-- **Loans:** includes titles as well as members, dates, status, and fines; returned borrowing stays in history.
-
-In Members, select a person and choose **View current loans**. Loans opens with
-only that exact Member ID's active and overdue borrowing. A label identifies the
-member scope. You can search within it, select a loan, and return it. Switching
-Status to Returned shows that member's history; **Clear filters** removes the
-member scope and shows everyone. A member with no current loans shows an empty table.
-The member scope survives refreshes and also limits CSV exports.
-
-Current borrowing includes overdue loans and excludes returned loans. Returning or
-checking out a copy refreshes these views. Search a borrower ID in Copies, or open a member’s current loans to review their books. Same-name borrowers are distinguished by Member ID.
-
-Checkout choices show book titles and Copy IDs, plus borrower names and Member IDs.
-Only available copies appear; borrowed and archived copies are excluded. A borrower
-must be explicitly selected. If nothing is available, add/return a copy or restore
-a title; if no borrowers are registered, register one in Members first. The choices
-come from the latest refresh, and the service checks availability again when saving.
-Cancel leaves borrowing unchanged.
+Checkout choices contain available copies and registered members. If choices are
+empty, add or return a copy, restore a title, or register a member as appropriate.
+Canceling a form or confirmation leaves records unchanged.
 
 ![Checkout form](../images/checkout.png)
 
-Selection actions use the selected record even after searching or sorting. Canceling
-a checkout form or return confirmation leaves records unchanged. Returned history
-rows cannot be returned again; choose the current Active or Overdue loan.
+## 5.3. Find and interpret records
 
-Select a row and choose **View details** to read the complete record without clipped
-text. Wide tables scroll horizontally; hover over a cell to see its full text.
-Borrowing details are included in CSV exports.
+Books initially selects Active; Loans selects Current. Current includes overdue
+borrowing. Search matches literal text across displayed columns. Search and status
+filters combine; Clear filters removes search and member scope and selects All.
+Refresh retains filters. Click headings to sort; numbers and dates use their value order.
 
-## Archive a title
+| Section | Display order |
+| --- | --- |
+| Books | ISBN, Title, Author, Status, Copies, Current borrowers |
+| Copies | Copy ID, ISBN, Title, Author, Status, Member ID, Borrower, Due |
+| Members | Member ID, Name, Email, Current loans |
+| Loans | Loan ID, Copy ID, ISBN, Title, Author, Member ID, Member, Checked out, Due, Returned, Status, Fine |
 
-Select the book, choose Archive selected book, and confirm. All copies of that title
-must first be returned. The title and history remain, but its copies cannot be
-borrowed or expanded with new copies. Find archived titles using the status filter,
-select one, choose Restore selected book, and confirm to resume lending.
+Foreign-key details follow their IDs. Copies is a physical-copy count in Books;
+Current loans is a count in Members. Copies shows borrower details only while lent.
+Scroll wide tables horizontally. Hover for full cell text or use View details.
 
-Editing an archived title's description does not restore it. The application has
-no permanent-delete action for books, members, copies, or loan history.
+To inspect possession, select a member and choose View current loans. Loans opens
+scoped to that exact Member ID. The scope label remains visible across refreshes;
+choose Returned for that member's history or Clear filters for all members.
+Same-name borrowers remain distinguished by Member ID.
 
-## Understand Overview and fines
+## 5.4. Edit and archive
 
-Overview shows quick cards plus detailed totals. Current loans include overdue
-loans; archived copies are excluded from availability. Charges are calculated on
-calendar days after the due date using the configured rate, default 0.50 per day.
-Returning caps the charge at the return date. The Overview separates charges on
-current borrowing from charges recorded on returned loans. It does not show
-payments or unpaid balances, because payment collection is not implemented.
+Select a book or member and choose its Edit action. Update descriptive fields and
+confirm; ISBN and Member ID remain fixed. Invalid input is rejected without replacing
+existing details. Actions are disabled until the selection is eligible and while
+background record work is in progress.
 
-## Save a report
+To archive a title, return its borrowed copies, select it in Books, and confirm
+Archive selected book. Find it under Archived and choose Restore selected book to
+resume lending. Editing its description does not restore it. Archive eligibility
+and retained history are specified in [Section 1.4](requirements.md#14-business-rules).
+
+## 5.5. Read the overview
+
+Overview presents totals and separates current and returned late charges.
+For calculation policy, identifiers, and status definitions, see
+[Section 1.4](requirements.md#14-business-rules). These charges do not represent payment balances.
+
+## 5.6. Export a report
 
 Set search, status, sorting, and column order, then choose Export CSV. Select a new
-filename in an existing folder. The report follows the displayed records; empty
-results export headers only. The application adds `.csv` if needed and will not
-replace an existing file. CSV import is not available.
+filename in an existing folder. Export includes the displayed member scope; empty
+results contain headers only. The app adds `.csv` if needed and preserves existing files.
 
-## Refresh, errors, and closing
+## 5.7. Recover from errors and close
 
-Refresh all reloads every section and keeps filter choices. Record operations run
-in the background; disabled actions and an activity indicator show that work is
-in progress. A successful write can be followed by a failed refresh. If the message
-says so, refresh before repeating the write. If a database connection was lost
-during saving, reload or restart to determine what was saved before retrying.
+Refresh all reloads every section. If a save succeeded but refresh failed, refresh
+before repeating the action. After a connection loss during saving, reload or restart
+to determine the saved result before retrying. Use the
+[LMS-DB, Section 13](../database/README.md#13-if-connection-fails) for connection errors.
+Report the exact message without sharing passwords.
 
-Use one application instance at a time. For MySQL restart verification and common
-connection errors, see the [database guide](../database/README.md). Report the exact
-error message when asking for help, without sharing database passwords.
+Wait for background work before closing. Confirm discard when leaving a temporary
+session. Saved sessions retain records in MySQL.
 
-## Remembered layout
+## 5.8. Local layout settings
 
-Closing saves each section's column widths. Window size is saved when the window
-is closed in normal mode.
-On reopening, the window is centered and its saved size is limited to the current
-screen. Column widths follow their headers, even if you moved columns before closing.
-Startup filters stay Active for Books and Current for Loans.
-
-Settings live in `.library-management-system/ui.properties` inside your user home
-folder (`/Users/your-name` on macOS, typically `C:\Users\your-name` on Windows).
-They contain sizes only and are separate from library storage. Close the app and
-delete this file to reset the layout. Missing or unreadable settings use defaults.
+Closing remembers column widths and normal-mode window size. Reopening centers the
+window and bounds its size to the current screen; column widths follow headers.
+Settings contain sizes only, stored at `.library-management-system/ui.properties`
+in the user home folder (`/Users/your-name` on macOS, typically `C:\Users\your-name`
+on Windows). Close the app and delete this file to reset layout. Missing or
+unreadable settings use defaults.

@@ -1,13 +1,17 @@
-# Architecture
+# 2. Software Design Description
 
-## Design reference
+**Document ID:** LMS-SDD
 
-Use the [schema and its foreign keys](data-model.md#schema-first-design-reference)
+**Audience:** implementers and technical reviewers.
+
+## 2.1. Design reference
+
+Use the [Section 4.1](data-model.md#41-schema-first-design-reference)
 as the starting point for stored fields and relationships. Models, repository
 mapping, service workflows, and GUI record sections build on that definition.
 The GUI presents readable relationships through Library rather than running SQL.
 
-## Component boundaries
+## 2.2. Component boundaries
 
 ```mermaid
 flowchart TB
@@ -34,7 +38,7 @@ Main coordinates startup only. A repository instance is selected once and passed
 to Library. Temporary mode uses an empty or example-populated memory repository;
 MySQL mode uses JDBC and explicitly initializes missing tables before the GUI starts.
 
-## UML class diagrams
+## 2.3. UML class diagrams
 
 The diagrams show the main classes with selected fields and methods. Types without
 package labels are project classes; the desktop view identifies its Swing base classes.
@@ -49,7 +53,7 @@ package labels are project classes; the desktop view identifies its Swing base c
 | `1`, `0..*` | One associated object, or zero or more associated objects |
 | `+`, `-` | Public member, private member |
 
-### Domain classes
+### 2.3.1. Domain classes
 
 These classes belong to `com.daniel.library.model`. A copy references one title;
 each loan references one copy and one member. A copy can have many historical loans,
@@ -97,7 +101,7 @@ classDiagram
     Loan "0..*" --> "1" Member : member
 ```
 
-### Service and storage classes
+### 2.3.2. Service and storage classes
 
 Library, LibraryRepository, LibraryData, LibrarySnapshot, and LibrarySummary belong
 to `service`. InMemoryLibraryRepository, JdbcLibraryRepository, and JdbcSettings
@@ -192,13 +196,13 @@ The read-only lists returned by a repository do not make their entities immutabl
 JdbcSettings opens JDBC connections; JdbcLibraryRepository controls SQL operations
 and connection lifetimes.
 
-### Desktop classes and inheritance
+### 2.3.3. Desktop classes and inheritance
 
 Main belongs to `com.daniel.library`; SampleData belongs to `demo`. Desktop classes
 belong to `ui`. Each view shows a different relationship type; repeated class names
 refer to the same Java classes.
 
-#### Swing inheritance
+#### 2.3.3.1. Swing inheritance
 
 JFrame and JPanel belong to `javax.swing`. These arrows represent Java `extends`
 declarations only.
@@ -220,7 +224,7 @@ classDiagram
     JPanel <|-- CheckoutForm
 ```
 
-#### Startup dependencies
+#### 2.3.3.2. Startup dependencies
 
 Main selects the service and sample data; LibraryApp constructs the window.
 
@@ -233,7 +237,7 @@ classDiagram
     LibraryApp ..> LibraryWindow : creates
 ```
 
-#### Window associations
+#### 2.3.3.3. Window associations
 
 LibraryWindow retains the service, workspace components, layout settings, and
 presentation rows. All arrows originate from the window; multiplicities describe
@@ -274,9 +278,9 @@ The following links describe collaboration between the components:
 LibraryRecords contains display values derived from one LibrarySnapshot. The
 window's record actions call Library; repository implementations remain behind
 the service contract. Styling and utility classes are described in
-[Desktop composition](#desktop-composition).
+[Section 2.7](#27-desktop-composition).
 
-## Packages
+## 2.4. Packages
 
 | Package | Responsibility |
 | --- | --- |
@@ -292,7 +296,7 @@ UI source lives directly in ui; tests use the same package. SQL and database set
 in `database/`. Generated classes and API documentation are excluded from Git. UI reference screenshots
 are versioned in `images/`.
 
-## Write ownership
+## 2.5. Write ownership
 
 Library validates application workflows. The service package defines LibraryRepository
 and LibraryData: the storage contract and its related record result. The persistence
@@ -305,7 +309,7 @@ references held by copies and loans. JDBC hydrates related objects together usin
 identifier maps. Each SQL write commits independently through a short-lived
 connection. The return operation saves its date before changing the caller's loan.
 
-## Read ownership and reporting
+## 2.6. Read ownership and reporting
 
 Library.getSnapshot captures one repository load, one clock date, and the configured
 fine rate. LibrarySnapshot owns availability, late-charge, overdue, and overview
@@ -317,7 +321,7 @@ read-only; entities inside them remain mutable, especially in memory mode. This
 is an operation-scoped reporting view, not an immutable historical snapshot.
 Read methods load the full dataset.
 
-## Desktop composition
+## 2.7. Desktop composition
 
 - LibraryApp installs the theme and schedules Swing construction.
 - LibraryWindow wires forms, record actions, worker lifecycle, and close handling.
@@ -334,14 +338,12 @@ Its completion handler updates components on the event thread. Export captures a
 view snapshot there, then writes files in a separate worker. Assertions can inspect
 these components headlessly; native focus and modal behavior require a real display.
 
-## Error and operational boundaries
+## 2.8. Error and operational boundaries
 
 SQLExceptions are wrapped in user-readable IllegalStateExceptions with original
 causes retained. Main shows startup errors and LibraryWindow shows workflow errors.
 Credentials are read from environment variables and hidden from settings.toString().
 
-There is no connection pool, application login, background scheduler, schema
-migration framework, or multi-writer conflict manager. Use one running instance.
-A schema initializer creates missing tables only. Database outage never switches
-the application to memory silently. Packaging is an IntelliJ/Maven project, not
-an installer or self-contained executable JAR.
+Connection handling uses short-lived connections without pooling. Schema initialization
+creates missing tables; upgrades require explicit DDL maintenance. Product operating
+constraints and exclusions are defined in [Section 1.6](requirements.md#16-boundaries-and-acceptance).

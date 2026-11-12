@@ -1,6 +1,8 @@
-# Testing and verification
+# 6. Verification Plan
 
-## Automated local suite
+**Document ID:** LMS-VV
+
+## 6.1. Automated local suite
 
 Use JDK 27 for the project and Maven runner. In IntelliJ, reload Maven and choose
 **Maven > Lifecycle > test**, or run `mvn test` when Maven is on PATH. AllChecks can
@@ -21,13 +23,13 @@ It does not connect to MySQL or open native windows.
 | SummaryChecks | Totals after borrowing, returning, archiving, and restoring | FR-11 |
 | SnapshotChecks | One repository read per refresh and one consistent reporting date | NFR-03 |
 | PersistenceFailureChecks | Failed inserts/edits/returns/archive changes do not mutate successful-looking state | NFR-04 |
-| DesktopChecks | Loan identity/dates and foreign-key relationships, borrower/possession rows, checkout choices and prerequisites, same-name member identities, read-only tables, navigation page selection | FR-14 |
+| DesktopChecks | Loan identity/dates and foreign-key relationships, borrower/possession rows, checkout choices and prerequisites, same-name member identities, read-only tables, navigation page selection | FR-01, FR-14–15 |
 | UiPreferencesChecks | Window/column round trips, moved columns, smaller screens, malformed/unwritable settings | FR-16 |
 | TableFilterChecks | Startup defaults, eligible selection actions and busy/refresh states, literal search, exact member scope, sort/filter selection, numeric fine sorting, exported row order | FR-10, FR-12 |
 | SampleDataChecks | Canonical fixture, repeat population, preserved edits/history, conflicts, retry after partial failure | FR-13 |
 | CsvExportChecks | UTF-8, commas/quotes/newlines, nulls, empty reports, invalid destinations, existing-file preservation | FR-12 |
 
-## Live MySQL check
+## 6.2. Live MySQL check
 
 The separate JdbcPersistenceChecks requires:
 
@@ -41,14 +43,16 @@ checks reloads, editing, duplicate active-loan rejection, returns, archive/resto
 reborrowing, and retained historical return dates, then deletes its own records.
 It runs separately from AllChecks and requires a live MySQL server.
 
-## Native acceptance procedure (macOS and Windows)
+## 6.3. Native acceptance procedure (macOS and Windows)
 
 1. Run Main with `--sample`. Verify all five sidebar destinations, explanation text,
    summary cards, tabular headers, status badges, and empty-filter messages. Verify
    Active is the initial Books filter and Current is the initial Loans filter. Select rows
    and check View details, including long borrower lists.
+
 2. Exercise keyboard navigation and focus, including search, filter selection,
    sorting, action buttons, Cancel, and confirmation dialogs.
+
 3. Add a book and copy, register a member, check out and return it. Test selection
    actions after sorting and filtering Copies and Loans, cancel each dialog, and
    reject borrowed/archived copies for checkout and returned history rows for returns. From Members,
@@ -58,29 +62,44 @@ It runs separately from AllChecks and requires a live MySQL server.
    error messages, late-charge examples, and preserved history. From Books, select
    an active title and add a copy without entering ISBN. Verify disabled selection
    actions for no selection, borrowed/archived copies, and returned loans.
+
 4. Edit a sorted/filtered selection and verify the intended record changes. Reject
    an invalid email and confirm the existing details remain.
+
 5. Confirm Archive selected book is disabled during borrowing. Return all copies,
    archive the title, choose Archived, restore it, and verify availability.
+
 6. Export a filtered/sorted view, cancel a save, reject an existing filename, and
    inspect a Unicode/quoted-value report with a CSV reader.
+
 7. Repeat at the minimum window size and with platform display scaling. Check
    dialog placement, clipped labels, close behavior, and busy-state visibility. Resize
    the window and columns, close, reopen, and verify the saved layout; also test
    reopening on a smaller display.
+
 8. With MySQL, run `--database --sample`, close, restart with `--database`, and
    verify saved edits, returns, archive state, and history survive.
+
 9. Stop MySQL during a disposable test session and verify errors do not silently
    switch storage modes or claim a failed write succeeded.
 
-## Documentation and structure checks
+## 6.4. Documentation and structure checks
 
 Generate Javadocs in IntelliJ with full doclint and warnings treated as errors.
 Check local documentation links, package-to-folder alignment, duplicate source files,
-and ignored build output. The [development guide](development.md) provides Javadoc
+and ignored build output. The [Section 7.3](development.md#73-generate-javadocs) provides Javadoc
 settings and the layout-review procedure.
 
-## Verification scope
+## 6.5. Acceptance criteria
+
+Local verification passes when all registered groups pass and compilation succeeds.
+Documentation verification passes when local links resolve and Javadocs complete
+with doclint enabled and warnings treated as errors. Native and database acceptance
+requires completing [Section 6.2](#62-live-mysql-check) and [Section 6.3](#63-native-acceptance-procedure-macos-and-windows) on the stated target platforms, recording the
+platform, JDK/MySQL versions, date, result, and any defect. A local headless pass
+does not satisfy those acceptance cases.
+
+## 6.6. Verification scope
 
 The local suite checks domain rules, repository failure handling, reporting,
 Swing components, CSV output, and layout preferences. It runs without a database

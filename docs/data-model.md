@@ -1,10 +1,12 @@
-# Data model and persistence
+# 4. Data Design
+
+**Document ID:** LMS-DAT
 
 The authoritative DDL is [database/schema.sql](../database/schema.sql). It is bundled
 as `/database/schema.sql` by Maven. Database creation remains separate in
 [create-database.sql](../database/create-database.sql).
 
-## Schema-first design reference
+## 4.1. Schema-first design reference
 
 For this design, start with the schema: tables identify stored records, columns
 identify their stored fields, primary keys identify records, and foreign keys
@@ -62,7 +64,7 @@ erDiagram
     }
 ```
 
-## Tables and limits
+## 4.2. Tables and limits
 
 | Table | Stored fields and constraints |
 | --- | --- |
@@ -77,7 +79,7 @@ are storage limits, not matching model length validators. Avoid identifiers with
 surrounding whitespace: GUI forms trim entries, and database string comparison
 semantics can differ from Java equality for trailing spaces.
 
-## Active borrowing constraint
+## 4.3. Active borrowing constraint
 
 `active_copy_id` is a stored generated column: copy_id while return_date is null,
 otherwise null. Its unique index allows only one active loan per copy while
@@ -88,7 +90,7 @@ CHECK constraints require due_date on/after checkout_date and a return date that
 is null or on/after checkout. The service additionally checks participants,
 availability, and archive policy before saving.
 
-## Identity and history
+## 4.4. Identity and history
 
 BookCopy is a record with `copyId()` and `book()` accessors. Its components cannot
 be reassigned, but the referenced Book can still be edited. Record equality compares
@@ -101,18 +103,9 @@ they are not redundant status columns. The daily fine rate and currency are not
 stored per loan, and no payments table exists. Current configuration must remain
 consistent when interpreting historical charges.
 
-## Persistence semantics
+## 4.5. Persistence references
 
-- One load reconstructs a connected entity graph inside a read transaction.
-- Individual writes use prepared statements and commit independently.
-- Active and returned loans can be inserted; sample/historical return dates are retained.
-- Memory lists are copied on read, but contained entities are shared and mutable.
-- Sample population uses one Java fixture. It preserves existing IDs, edits,
-  archive state, and borrowing; skips incompatible copy identities or active-loan
-  conflicts; and can resume after partial failure.
-- The schema initializer creates absent tables; it does not upgrade existing table definitions.
-- There is no hard-delete workflow in the application. The separate live test removes
-  only the uniquely named records it created in the dedicated test database.
-
-See the [database guide](../database/README.md) for account privileges, credentials,
-setup, and optional example population on macOS and Windows.
+Read/write ownership and transaction boundaries are defined in
+[Section 2.5](architecture.md#25-write-ownership) and [Section 2.6](architecture.md#26-read-ownership-and-reporting). Account provisioning, schema
+initialization, and repeatable sample population are defined in
+[the database installation procedure](../database/README.md).

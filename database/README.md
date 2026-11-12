@@ -1,21 +1,25 @@
-# Database setup
+# Database Installation Procedure
+
+**Document ID:** LMS-DB
+
+**Audience:** local database administrator and application operator.
 
 Use MySQL mode when library records should survive restarting the application.
 
-## Files
+## 1. Files
 
 - `create-database.sql`: creates the library database and separate test database.
 - `schema.sql`: creates the tables automatically when the application starts.
 
-## Requirements
+## 2. Requirements
 
 On macOS (Apple) or Windows (Microsoft), install MySQL Server, IntelliJ IDEA, and
 JDK 27 before setup. A database client alone does not install or start the server.
 The SQL scripts and IntelliJ configuration below are the same on both systems.
 
-## 1. Start MySQL
+## 3. Start MySQL
 
-### macOS
+### 3.1. macOS
 
 For MySQL installed with the official macOS package, run in Terminal:
 
@@ -27,7 +31,7 @@ Enter your Mac login password for sudo. If MySQL was installed another way, star
 it using that installation's service controls. This path is specific to the
 standard macOS package installation.
 
-### Windows
+### 3.2. Windows
 
 1. Press **Windows + R**, enter `services.msc`, and press Enter.
 2. Find your MySQL service. Its name may be `MySQL84` or a custom name.
@@ -37,7 +41,7 @@ If no MySQL service appears, check the MySQL Server installation and its service
 configuration. Administrator access may be needed to start the service. See the
 [MySQL Windows service guide](https://dev.mysql.com/doc/refman/8.4/en/windows-start-service.html).
 
-## 2. Connect as the MySQL administrator
+## 4. Connect as the MySQL administrator
 
 In IntelliJ's **Database** panel, add a **MySQL** data source with these values:
 
@@ -52,9 +56,9 @@ In IntelliJ's **Database** panel, add a **MySQL** data source with these values:
 
 Click **Test Connection**, download the driver if requested, then click **OK**.
 This password is not necessarily your Mac or Windows login password. The project
-does not set it. Use this administrator connection for steps 3 and 4.
+does not set it. Use this administrator connection for sections 5 and 6.
 
-## 3. Create the databases
+## 5. Create the databases
 
 1. Right-click **MySQL administrator > New > Query Console**.
 2. Open `database/create-database.sql` in the project, copy its contents into that
@@ -66,7 +70,7 @@ does not set it. Use this administrator connection for steps 3 and 4.
 The script can be rerun without deleting existing records. Tables are created
 later, when the application starts in database mode.
 
-## 4. Create the library account
+## 6. Create the library account
 
 In the same **MySQL administrator** query console, run the following SQL.
 Replace `your-chosen-password` with a password you choose before running it:
@@ -79,10 +83,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, REFERENCES ON library_management_t
 
 If `library_user` already exists, skip CREATE USER, reuse its password, and run
 only the GRANT statements. Use the username `library_user` consistently.
-There is no built-in project password. Keep your chosen password for steps 5 and 6,
+There is no built-in project password. Keep your chosen password for sections 7 and 8,
 and keep actual passwords out of committed files.
 
-## 5. Connect as the library account
+## 7. Connect as the library account
 
 Add a separate **MySQL** data source in IntelliJ's **Database** panel:
 
@@ -92,14 +96,14 @@ Add a separate **MySQL** data source in IntelliJ's **Database** panel:
 | Host | `localhost` |
 | Port | `3306` |
 | User | `library_user` |
-| Password | The password chosen in step 4 |
+| Password | The password chosen in section 6 |
 | Database | `library_management` |
 | URL | `jdbc:mysql://localhost:3306/library_management` |
 
-Click **Test Connection**, then **OK**. Use the account created in step 4.
+Click **Test Connection**, then **OK**. Use the account created in section 6.
 The Name field is a display label.
 
-## 6. Configure and run the application
+## 8. Configure and run the application
 
 1. Reload Maven to download the project's MySQL driver dependency.
 2. Open **Run > Edit Configurations > Main**. Set **Program arguments** to
@@ -110,7 +114,7 @@ The Name field is a display label.
    | --- | --- |
    | `LIBRARY_DB_URL` | `jdbc:mysql://localhost:3306/library_management` |
    | `LIBRARY_DB_USER` | `library_user` |
-   | `LIBRARY_DB_PASSWORD` | The same password chosen in step 4 |
+   | `LIBRARY_DB_PASSWORD` | The same password chosen in section 6 |
 
 4. Click **Apply > OK**, then run Main using JDK 27.
 5. Confirm the window header shows **Saved library** and **Changes save automatically**.
@@ -121,17 +125,12 @@ The application always opens the desktop GUI. `--database` selects MySQL storage
 The Database panel and the Java application use separate connections. Configuring
 the Database panel does not automatically configure Main's environment variables.
 
-## 7. Verify records survive a restart
+## 9. Verify installation
 
-1. Add a book, a physical copy, and a member using Books, Copies, and Members.
-2. Check out the copy, then close the window.
-3. Run Main again using the same `--database` configuration.
-4. Confirm the book, member, and active loan remain.
-5. In Loans, select the current loan and choose Return selected loan. Close and
-   restart the app, choose Returned in Loans, and confirm the saved return.
-   Its copy is Available in Copies.
+Follow the saved-storage restart and outage acceptance cases in
+[Section 6.3](../docs/testing.md#63-native-acceptance-procedure-macos-and-windows).
 
-## Optional: populate sample records
+## 10. Optional: populate sample records
 
 1. Complete the database and account setup above.
 2. In Main's run configuration, set Program arguments to `--database --sample`.
@@ -150,7 +149,7 @@ fails partway through, successful inserts remain; rerun after resolving the erro
 to finish adding missing examples. Existing conflicts can make a used database
 look different from the fresh samples.
 
-## Each time you run
+## 11. Each time you run
 
 On either system, start MySQL if needed and run Main with the same IntelliJ
 configuration. Setup scripts do not need to be rerun.
@@ -159,13 +158,11 @@ Use one running instance at a time. Records are read from the repository when
 requested, but already displayed results are not refreshed automatically. Without `--database`,
 the desktop uses temporary memory.
 
-## Optional database check
+## 12. Optional database verification
 
-Run `JdbcPersistenceChecks` with the same account variables and add
-`LIBRARY_TEST_DB_URL=jdbc:mysql://localhost:3306/library_management_test`.
-It checks save/reload behavior and cleans up its own records in the test database.
+Follow the live MySQL procedure in [Section 6.2](../docs/testing.md#62-live-mysql-check).
 
-## If connection fails
+## 13. If connection fails
 
 - **Connection refused:** start MySQL and check host/port.
 - **Access denied:** check account password and grants.
